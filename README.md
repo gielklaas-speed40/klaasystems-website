@@ -4,17 +4,9 @@ Statische website voor [Klaasystems](https://klaasystems.nl) — maatwerk automa
 
 Eén zelfstandig bestand (`index.html`) zonder dependencies: het lettertype (Archivo) en het logo (SVG) zitten in het bestand zelf.
 
-## Contactformulier activeren (Formspree)
+## Contactformulier (Formspree)
 
-Het formulier staat klaar maar moet één keer gekoppeld worden:
-
-1. Maak een gratis account op [formspree.io](https://formspree.io) met info@klaasystems.com.
-2. Klik **New form**, geef hem een naam (bijv. "Website contact").
-3. Kopieer het form-ID uit de endpoint-URL (`https://formspree.io/f/xxxxxxx`).
-4. Vervang in `index.html` de tekst `JOUW_FORM_ID` door dat ID (één plek, in het `<form action="…">`-attribuut).
-5. Commit en push — klaar. Inzendingen komen binnen op je e-mail.
-
-Het gratis plan van Formspree is voldoende om te starten (50 inzendingen per maand).
+Het formulier is gekoppeld aan Formspree-endpoint `https://formspree.io/f/mwlewqjg`; inzendingen komen binnen op het e-mailadres van het Formspree-account. Het gratis plan is voldoende om te starten (50 inzendingen per maand). Beheer en spamfilters: [formspree.io/forms](https://formspree.io/forms).
 
 ## Hosting (GitHub Pages)
 

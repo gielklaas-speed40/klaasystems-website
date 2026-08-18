@@ -684,7 +684,7 @@ footer { border-top: 1px solid var(--line); padding: 52px 0 40px; margin-top: 60
         </span>
       </div>
     </div>
-    <form class="card form-card reveal" id="contact-form" action="https://formspree.io/f/JOUW_FORM_ID" method="POST" novalidate>
+    <form class="card form-card reveal" id="contact-form" action="https://formspree.io/f/mwlewqjg" method="POST" novalidate>
       <div class="form-grid">
         <div class="field">
           <label for="cf-name">Naam</label>
@@ -827,11 +827,6 @@ footer { border-top: 1px solid var(--line); padding: 52px 0 40px; margin-top: 60
       if (!form.checkValidity()) {
         status.className = 'form-status err';
         status.textContent = 'Vul je naam, e-mailadres en bericht in.';
-        return;
-      }
-      if (form.action.indexOf('JOUW_FORM_ID') !== -1) {
-        status.className = 'form-status err';
-        status.textContent = 'Formulier nog niet gekoppeld: vervang JOUW_FORM_ID in de code door je Formspree form-ID.';
         return;
       }
       submitBtn.disabled = true;
