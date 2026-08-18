@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gielklaas-speed40.github.io/klaasystems-website/sitemap.xml
