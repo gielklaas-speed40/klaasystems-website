@@ -146,7 +146,7 @@ const $ = id => document.getElementById(id);
 // ---------------- globale staat ----------------
 let pdf = null, pageNo = 1, numPages = 1, docTitle = "";
 let W=0, H=0, S=2.083;              // canvas-afmetingen, px per pt
-let maskBase=null, mask=null, sealPx=null;  // wand-inkt, verzegeld masker, alleen-verzegeling
+let maskBase=null, mask=null, sealPx=null, rasterMask=null;
 let bgData=null, labels=[], scaleDen=null, pxPerMm=null, vectorMode=true;
 let rooms=[], types=[], nextId=1, nextTypeId=1;
 let cuts={};                        // per pagina: [[x0,y0,x1,y1],...]
@@ -175,10 +175,14 @@ async function showPage(n){
   $("pcur").textContent = pageNo + " / " + numPages;
   showBusy("Pagina renderen…");
   const page = await pdf.getPage(pageNo);
-  let vp = page.getViewport({scale: 150/72});
-  if (vp.width*vp.height > 13e6){                    // groot formaat: begrens
+  // resolutie afstemmen op het blad: vast pixelbudget in plaats van vaste dpi,
+  // zodat ingesloten afbeeldingen (pCon, scans) scherp genoeg blijven
+  const vp1 = page.getViewport({scale: 1});
+  const target = Math.min(300/72, Math.sqrt(12.5e6/(vp1.width*vp1.height)));
+  let vp = page.getViewport({scale: Math.max(150/72, Math.min(300/72, target))});
+  if (vp.width*vp.height > 13e6){
     const f = Math.sqrt(13e6/(vp.width*vp.height));
-    vp = page.getViewport({scale: 150/72*f});
+    vp = page.getViewport({scale: vp.scale*f});
   }
   S = vp.scale; W = Math.round(vp.width); H = Math.round(vp.height);
   for (const c of [bgC,fillC,uiC]){ c.width=W; c.height=H; }
@@ -289,19 +293,41 @@ function buildMaskFromOps(opl, vp){
   maskBase = new Uint8Array(W*H);
   let inkN=0;
   for (let i=0;i<W*H;i++){ if (d[i*4+3]>60){ maskBase[i]=1; inkN++; } }
+  const inkCov = inkN/(W*H);
   for (let b=0;b<3;b++){
     for (let x=0;x<W;x++){ maskBase[b*W+x]=0; maskBase[(H-1-b)*W+x]=0; }
     for (let y=0;y<H;y++){ maskBase[y*W+b]=0; maskBase[y*W+W-1-b]=0; }
   }
-  vectorMode = strokes > 60;
+  // een plattegrond-als-afbeelding (pCon, scans) heeft nauwelijks vector-inkt
+  // maar veel donkere rasterpixels; een vectortekening heeft juist veel strokes.
+  if (!bgData) bgData = bgX.getImageData(0,0,W,H).data;
+  let darkN=0;
+  const darkPx = new Uint8Array(W*H);
+  for (let i=0;i<W*H;i++){
+    const o=i*4;
+    if ((0.299*bgData[o]+0.587*bgData[o+1]+0.114*bgData[o+2]) < 95){ darkPx[i]=1; darkN++; }
+  }
+  const darkCov = darkN/(W*H);
+  // 3x3-sluiting: hersteld dunne wandlijnen die door antialiasing
+  // van de ingesloten afbeelding net onder de drempel uitkomen
+  const dil=new Uint8Array(W*H);
+  for (let y=1;y<H-1;y++){ const o=y*W;
+    for (let x=1;x<W-1;x++){
+      const i=o+x;
+      if (darkPx[i]||darkPx[i-1]||darkPx[i+1]||darkPx[i-W]||darkPx[i+W]||darkPx[i-W-1]||darkPx[i-W+1]||darkPx[i+W-1]||darkPx[i+W+1]) dil[i]=1;
+    } }
+  for (let y=1;y<H-1;y++){ const o=y*W;
+    for (let x=1;x<W-1;x++){
+      const i=o+x;
+      darkPx[i] = (dil[i]&&dil[i-1]&&dil[i+1]&&dil[i-W]&&dil[i+W]&&dil[i-W-1]&&dil[i-W+1]&&dil[i+W-1]&&dil[i+W+1]) ? 1 : darkPx[i];
+    } }
+  rasterMask = darkPx;
+  vectorMode = strokes > 60 && inkCov > 0.004;
   if (!vectorMode){
-    // scan of platgeslagen PDF: drempel op de weergave
-    if (!bgData) bgData = bgX.getImageData(0,0,W,H).data;
-    for (let i=0;i<W*H;i++){
-      const o=i*4, r=bgData[o],g=bgData[o+1],b=bgData[o+2];
-      maskBase[i] = (0.299*r+0.587*g+0.114*b) < 120 ? 1 : 0;
-    }
-    flash("Geen vectorlijnen gevonden — rastermodus (minder precies)");
+    maskBase = darkPx;
+    // zonegrenzen zijn hier lijnen, geen wanden: netto meten
+    $("edge").value = "0";
+    flash("Tekening als afbeelding herkend — rasteranalyse actief");
   }
 }
 
@@ -468,8 +494,30 @@ function floodRegion(sx, sy){
   return {reg, bw, bh, n:cnt, per, minx, maxx, miny, maxy, page:pageNo};
 }
 
+// ---------------- zelfkalibratie op geprinte m2-waarden ----------------
+function checkScaleAgainstRefs(){
+  if (!pxPerMm) return false;
+  const ratios=[];
+  for (const r of rooms){
+    if (!r.refVal || r.fl.manual) continue;
+    const a=r.fl.n/((pxPerMm*1000)**2);
+    if (a>0.5 && r.refVal>0.5) ratios.push(a/r.refVal);
+  }
+  if (ratios.length<3) return false;
+  ratios.sort((a,b)=>a-b);
+  const R=ratios[Math.floor(ratios.length/2)];
+  // alle metingen consistent dezelfde kant op => schaalfout in het titelblok
+  const eensgezind = ratios.every(x=>x<0.8) || ratios.every(x=>x>1.25);
+  if (!eensgezind || Math.abs(R-1)<0.2) return false;
+  pxPerMm *= Math.sqrt(R);
+  const den=Math.round(S/(pxPerMm*25.4/72));
+  $("scaletxt").textContent="1:"+den+" (zelf gekalibreerd)";
+  rebuildMask();
+  return true;
+}
+
 // ---------------- alles herkennen ----------------
-async function detectAll(){
+async function detectAll(allowRecal=true, allowModeSwitch=true){
   if (!mask){ return; }
   showBusy("Alle ruimtes herkennen…");
   await new Promise(r=>setTimeout(r,30));
@@ -503,8 +551,33 @@ async function detectAll(){
   for (const fl of found){
     const lbl=autoName(fl);
     if (hasLabels && !lbl.name && !lbl.ref) continue;
-    addRoom(fl, lbl.name, lbl.ref, lbl.vl, true);
+    addRoom(fl, lbl.name, lbl.ref, lbl.vl, true, lbl.refVal);
     added++;
+  }
+  // dekken de vectorlagen de tekening wel? de m²-labels zijn de lakmoesproef:
+  // veel labels maar weinig matchende kamers => wanden zitten in de afbeelding
+  if (allowModeSwitch && vectorMode && rasterMask){
+    const refLabels = labels.filter(l=>/^(?:Opp\.?:?\s*)?[\d.,]+\s*m[²2]$/i.test(l.t)).length;
+    const matched = rooms.filter(r=>r.fl.page===pageNo && r.refVal).length;
+    if (refLabels>=6 && matched < refLabels/2){
+      vectorMode=false; maskBase=rasterMask;
+      $("edge").value = "0";       // zonegrenzen zijn lijnen, geen wanden
+      rebuildMask();
+      rooms=rooms.filter(r=>r.fl.page!==pageNo);
+      fillX.clearRect(0,0,W,H);
+      await detectAll(allowRecal, false);
+      flash("Wanden bleken in de afbeelding te zitten — omgeschakeld naar rasteranalyse");
+      return;
+    }
+  }
+  if (allowRecal && checkScaleAgainstRefs()){
+    // schaal in het titelblok klopte niet met de geprinte m2-waarden:
+    // opnieuw herkennen met de gecorrigeerde schaal
+    rooms=rooms.filter(r=>r.fl.page!==pageNo);
+    fillX.clearRect(0,0,W,H);
+    await detectAll(false, false);
+    flash("Schaal week af van de m²-waarden in de tekening — automatisch gekalibreerd en opnieuw gemeten");
+    return;
   }
   renderList(); hideBusy();
   flash(added+" ruimtes gevonden — verwijder wat je niet nodig hebt, klik bij voor wat mist");
@@ -608,20 +681,34 @@ function autoName(fl){
   const inside=[];
   for (const l of roomLabels()){
     const x=Math.round(l.x), y=Math.round(l.y);
-    if (x>=fl.minx&&x<=fl.maxx&&y>=fl.miny&&y<=fl.maxy&&fl.reg[(y-fl.miny)*fl.bw+x-fl.minx]) inside.push(l);
+    if (x<fl.minx-30||x>fl.maxx+30||y<fl.miny-14||y>fl.maxy+14) continue;
+    // venster aftasten: in rastermodus is de labeltekst zelf masker-inkt,
+    // dus het exacte middelpunt ligt vaak nét niet in de regio
+    let hit=false;
+    scan: for (let dy=-14;dy<=14;dy+=3){
+      const yy=y+dy;
+      if (yy<fl.miny||yy>fl.maxy) continue;
+      const ro=(yy-fl.miny)*fl.bw;
+      for (let dx=-30;dx<=30;dx+=3){
+        const xx=x+dx;
+        if (xx<fl.minx||xx>fl.maxx) continue;
+        if (fl.reg[ro+xx-fl.minx]){ hit=true; break scan; }
+      }
+    }
+    if (hit) inside.push(l);
   }
   let refs=[], parts=[], vl=null;
   for (const l of inside){
-    const m=l.t.match(/Opp\.?:?\s*([\d.,]+)\s*m2/i);
+    const m=l.t.match(/^(?:Opp\.?:?\s*)?([\d.,]+)\s*m[²2]$/i) || l.t.match(/Opp\.?:?\s*([\d.,]+)\s*m[²2]/i);
     if (m){ refs.push(parseFloat(m[1].replace(",","."))); continue; }
     const v=l.t.match(/^VL[.\s]?\d{1,2}$/i);
     if (v){ vl=l.t.toUpperCase().replace(/\s/,""); continue; }
     if (l.t.length<=24 && !parts.includes(l.t)) parts.push(l.t);
   }
-  let ref=null;
-  if (refs.length===1) ref=refs[0].toLocaleString("nl-NL",{minimumFractionDigits:2})+" m²";
+  let ref=null, refVal=null;
+  if (refs.length===1){ refVal=refs[0]; ref=refs[0].toLocaleString("nl-NL",{minimumFractionDigits:2})+" m²"; }
   else if (refs.length>1) ref=refs.reduce((a,b)=>a+b,0).toLocaleString("nl-NL",{minimumFractionDigits:2})+" m² ("+refs.length+" zones samen)";
-  return {name: parts.slice(0,3).join(" · ").trim()||null, ref, vl};
+  return {name: parts.slice(0,3).join(" · ").trim()||null, ref, refVal, vl};
 }
 
 // ---------------- vak bijtellen / blok uitsluiten ----------------
@@ -687,9 +774,9 @@ function m2Of(r){
   return r.fl.n*apx + (r.fl.per/pxPerMm/1000)*edge;
 }
 const fmt=v=>v==null?"– m²":v.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2})+" m²";
-function addRoom(fl,name,ref,vlCode,quiet){
+function addRoom(fl,name,ref,vlCode,quiet,refVal){
   const color=PALETTE[(nextId-1)%PALETTE.length];
-  const room={id:nextId++, name:name||("Ruimte "+nextId), ref:ref||null, fl, color, typeId:assignType(fl,vlCode)};
+  const room={id:nextId++, name:name||("Ruimte "+nextId), ref:ref||null, refVal:refVal||null, fl, color, typeId:assignType(fl,vlCode)};
   rooms.push(room);
   paintRoom(room);
   if (!quiet) renderList();
@@ -859,7 +946,8 @@ view.addEventListener("pointerup",e=>{
     const fl=floodRegion(x,y);
     if (!fl){ flash("Geen omsloten ruimte gevonden — klik binnen het gebouw, teken een ▭ Vak, of sluit een opening met ✂️"); return; }
     const lbl=autoName(fl);
-    addRoom(fl,lbl.name,lbl.ref,lbl.vl);
+    addRoom(fl,lbl.name,lbl.ref,lbl.vl,false,lbl.refVal);
+    if (checkScaleAgainstRefs()){ renderList(); flash("Schaal automatisch gekalibreerd op de m²-waarden in de tekening"); }
   } else if ((mode==="rect"||mode==="sub")&&dragStart){
     const [a,b]=dragStart; dragStart=null; drawUi();
     const minx=Math.max(0,Math.min(a,x)), maxx=Math.min(W-1,Math.max(a,x));
