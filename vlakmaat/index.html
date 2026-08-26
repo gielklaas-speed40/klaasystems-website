@@ -84,6 +84,7 @@
       <button class="tbtn wide" id="t-auto">⚡ Alle ruimtes herkennen</button>
       <button class="tbtn on" id="t-measure">📐 Meten</button>
       <button class="tbtn" id="t-rect">▭ Vak</button>
+      <button class="tbtn" id="t-sub">⊖ Uitsluiten</button>
       <button class="tbtn" id="t-cut">✂️ Knippen</button>
       <button class="tbtn" id="t-cal">🎯 Kalibreren</button>
     </div>
@@ -623,6 +624,60 @@ function autoName(fl){
   return {name: parts.slice(0,3).join(" · ").trim()||null, ref, vl};
 }
 
+// ---------------- vak bijtellen / blok uitsluiten ----------------
+function recomputeNP(fl){
+  let n=0, per=0;
+  for (let y=fl.miny;y<=fl.maxy;y++){ const ro=(y-fl.miny)*fl.bw;
+    for (let x=fl.minx;x<=fl.maxx;x++){
+      if (!fl.reg[ro+x-fl.minx]) continue; n++;
+      const l=x>fl.minx?fl.reg[ro+x-1-fl.minx]:0, r=x<fl.maxx?fl.reg[ro+x+1-fl.minx]:0;
+      const u=y>fl.miny?fl.reg[(y-fl.miny-1)*fl.bw+x-fl.minx]:0, d=y<fl.maxy?fl.reg[(y-fl.miny+1)*fl.bw+x-fl.minx]:0;
+      if (!l||!r||!u||!d) per++;
+    } }
+  fl.n=n; fl.per=per;
+}
+function rectOverlap(fl, x0,y0,x1,y1){
+  let ov=0;
+  const ax=Math.max(fl.minx,x0), bx=Math.min(fl.maxx,x1);
+  const ay=Math.max(fl.miny,y0), by=Math.min(fl.maxy,y1);
+  for (let y=ay;y<=by;y++){ const ro=(y-fl.miny)*fl.bw;
+    for (let x=ax;x<=bx;x++) if (fl.reg[ro+x-fl.minx]) ov++; }
+  return ov;
+}
+function mergeRectInto(room, x0,y0,x1,y1){
+  const fl=room.fl;
+  const nminx=Math.min(fl.minx,x0), nminy=Math.min(fl.miny,y0);
+  const nmaxx=Math.max(fl.maxx,x1), nmaxy=Math.max(fl.maxy,y1);
+  const nbw=nmaxx-nminx+1, nbh=nmaxy-nminy+1;
+  const nreg=new Uint8Array(nbw*nbh);
+  for (let y=fl.miny;y<=fl.maxy;y++){ const ro=(y-fl.miny)*fl.bw;
+    for (let x=fl.minx;x<=fl.maxx;x++){
+      const v=fl.reg[ro+x-fl.minx];
+      if (v) nreg[(y-nminy)*nbw+x-nminx]=v;
+    } }
+  for (let y=y0;y<=y1;y++) for (let x=x0;x<=x1;x++) nreg[(y-nminy)*nbw+x-nminx]=1;
+  fl.reg=nreg; fl.bw=nbw; fl.bh=nbh;
+  fl.minx=nminx; fl.miny=nminy; fl.maxx=nmaxx; fl.maxy=nmaxy;
+  recomputeNP(fl);
+}
+function subtractRect(x0,y0,x1,y1){
+  let touched=0;
+  for (const r of [...rooms]){
+    const fl=r.fl;
+    if (fl.page!==pageNo) continue;
+    const ax=Math.max(fl.minx,x0), bx=Math.min(fl.maxx,x1);
+    const ay=Math.max(fl.miny,y0), by=Math.min(fl.maxy,y1);
+    if (ax>bx||ay>by) continue;
+    let hit=false;
+    for (let y=ay;y<=by;y++){ const ro=(y-fl.miny)*fl.bw;
+      for (let x=ax;x<=bx;x++) if (fl.reg[ro+x-fl.minx]){ fl.reg[ro+x-fl.minx]=0; hit=true; } }
+    if (!hit) continue;
+    touched++;
+    recomputeNP(fl);
+    if (fl.n < 60) rooms=rooms.filter(x=>x!==r);
+  }
+  return touched;
+}
 // ---------------- kamers + lijst ----------------
 function m2Of(r){
   if (!pxPerMm) return null;
@@ -750,14 +805,16 @@ const toCanvas=e=>{
 // ---------------- gereedschap ----------------
 function setMode(m){
   mode=m;
-  for (const id of ["measure","rect","cut","cal"]) $("t-"+id).classList.toggle("on",id===m);
+  for (const id of ["measure","rect","sub","cut","cal"]) $("t-"+id).classList.toggle("on",id===m);
   flash(m==="measure"?"Klik in een ruimte om te meten"
-      : m==="rect"?"Sleep een rechthoek over het vlak dat je wilt meten"
+      : m==="rect"?"Sleep een vak: los = nieuwe ruimte, overlappend = bijtellen (bijv. een gemist deurvlak)"
+      : m==="sub"?"Sleep een blok over wat níét mee mag tellen — het wordt afgetrokken"
       : m==="cut"?"Sleep een lijn om een doorgang te sluiten of een zone te splitsen"
       : "Klik twee punten van een bekende afstand (bijv. een maatlijn)");
 }
 $("t-measure").onclick=()=>setMode("measure");
 $("t-rect").onclick=()=>setMode("rect");
+$("t-sub").onclick=()=>setMode("sub");
 $("t-cut").onclick=()=>setMode("cut");
 $("t-cal").onclick=()=>setMode("cal");
 let dragStart=null, calPts=[];
@@ -771,10 +828,10 @@ function drawUi(){
 view.addEventListener("pointerdown",e=>{
   if (e.button!==0) return;
   const [x,y]=toCanvas(e);
-  if (mode==="cut"||mode==="rect") dragStart=[x,y];
+  if (mode==="cut"||mode==="rect"||mode==="sub") dragStart=[x,y];
 });
 view.addEventListener("pointermove",e=>{
-  if (!dragStart||(mode!=="cut"&&mode!=="rect")) return;
+  if (!dragStart||(mode!=="cut"&&mode!=="rect"&&mode!=="sub")) return;
   const [x,y]=toCanvas(e);
   drawUi();
   uiX.lineWidth=2/z;
@@ -782,12 +839,14 @@ view.addEventListener("pointermove",e=>{
     uiX.strokeStyle="#b3541e";
     uiX.beginPath(); uiX.moveTo(dragStart[0],dragStart[1]); uiX.lineTo(x,y); uiX.stroke();
   } else {
-    uiX.strokeStyle="#0f6b5c"; uiX.setLineDash([6/z,4/z]);
+    uiX.strokeStyle = mode==="sub" ? "#b3541e" : "#0f6b5c";
+    uiX.setLineDash([6/z,4/z]);
     uiX.strokeRect(Math.min(dragStart[0],x),Math.min(dragStart[1],y),Math.abs(x-dragStart[0]),Math.abs(y-dragStart[1]));
     uiX.setLineDash([]);
     if (pxPerMm){
       const a=Math.abs(x-dragStart[0])*Math.abs(y-dragStart[1])/((pxPerMm*1000)**2);
-      uiX.fillStyle="#0f6b5c"; uiX.font=(13/z)+"px sans-serif";
+      uiX.fillStyle = mode==="sub" ? "#b3541e" : "#0f6b5c";
+      uiX.font=(13/z)+"px sans-serif";
       uiX.fillText(a.toLocaleString("nl-NL",{maximumFractionDigits:2})+" m²", Math.min(dragStart[0],x), Math.min(dragStart[1],y)-6/z);
     }
   }
@@ -801,16 +860,34 @@ view.addEventListener("pointerup",e=>{
     if (!fl){ flash("Geen omsloten ruimte gevonden — klik binnen het gebouw, teken een ▭ Vak, of sluit een opening met ✂️"); return; }
     const lbl=autoName(fl);
     addRoom(fl,lbl.name,lbl.ref,lbl.vl);
-  } else if (mode==="rect"&&dragStart){
+  } else if ((mode==="rect"||mode==="sub")&&dragStart){
     const [a,b]=dragStart; dragStart=null; drawUi();
     const minx=Math.max(0,Math.min(a,x)), maxx=Math.min(W-1,Math.max(a,x));
     const miny=Math.max(0,Math.min(b,y)), maxy=Math.min(H-1,Math.max(b,y));
     const bw=maxx-minx+1, bh=maxy-miny+1;
     if (bw<6||bh<6) return;
-    const reg=new Uint8Array(bw*bh).fill(1);
-    const fl={reg,bw,bh,n:bw*bh,per:2*(bw+bh),minx,maxx,miny,maxy,page:pageNo,manual:true};
-    const lbl=autoName(fl);
-    addRoom(fl,lbl.name||"Vak",lbl.ref,lbl.vl);
+    if (mode==="sub"){
+      const t=subtractRect(minx,miny,maxx,maxy);
+      repaintAll(); renderList();
+      flash(t?"Blok uitgesloten van "+t+" ruimte(s)":"Geen gemeten ruimte onder dit blok");
+      return;
+    }
+    let best=null, bestOv=0;
+    for (const r of rooms){
+      if (r.fl.page!==pageNo) continue;
+      const ov=rectOverlap(r.fl,minx,miny,maxx,maxy);
+      if (ov>bestOv){ bestOv=ov; best=r; }
+    }
+    if (best && bestOv>60){
+      mergeRectInto(best,minx,miny,maxx,maxy);
+      repaintAll(); renderList();
+      flash("Vak bijgeteld bij \""+best.name+"\"");
+    } else {
+      const reg=new Uint8Array(bw*bh).fill(1);
+      const fl={reg,bw,bh,n:bw*bh,per:2*(bw+bh),minx,maxx,miny,maxy,page:pageNo,manual:true};
+      const lbl=autoName(fl);
+      addRoom(fl,lbl.name||"Vak",lbl.ref,lbl.vl);
+    }
   } else if (mode==="cut"&&dragStart){
     const [a,b]=dragStart; dragStart=null;
     if (Math.hypot(x-a,y-b)>4){ (cuts[pageNo]=cuts[pageNo]||[]).push([a,b,x,y]); rebuildMask(); drawUi(); }
