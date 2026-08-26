@@ -83,6 +83,7 @@
     <div id="tools">
       <button class="tbtn wide" id="t-auto">⚡ Alle ruimtes herkennen</button>
       <button class="tbtn on" id="t-measure">📐 Meten</button>
+      <button class="tbtn" id="t-rect">▭ Vak</button>
       <button class="tbtn" id="t-cut">✂️ Knippen</button>
       <button class="tbtn" id="t-cal">🎯 Kalibreren</button>
     </div>
@@ -626,6 +627,7 @@ function autoName(fl){
 function m2Of(r){
   if (!pxPerMm) return null;
   const apx=1/((pxPerMm*1000)**2);
+  if (r.fl.manual) return r.fl.n*apx;     // getekend vak: exact wat je tekende
   const edge=+$("edge").value/1000;
   return r.fl.n*apx + (r.fl.per/pxPerMm/1000)*edge;
 }
@@ -748,12 +750,14 @@ const toCanvas=e=>{
 // ---------------- gereedschap ----------------
 function setMode(m){
   mode=m;
-  for (const id of ["measure","cut","cal"]) $("t-"+id).classList.toggle("on",id===m);
+  for (const id of ["measure","rect","cut","cal"]) $("t-"+id).classList.toggle("on",id===m);
   flash(m==="measure"?"Klik in een ruimte om te meten"
+      : m==="rect"?"Sleep een rechthoek over het vlak dat je wilt meten"
       : m==="cut"?"Sleep een lijn om een doorgang te sluiten of een zone te splitsen"
       : "Klik twee punten van een bekende afstand (bijv. een maatlijn)");
 }
 $("t-measure").onclick=()=>setMode("measure");
+$("t-rect").onclick=()=>setMode("rect");
 $("t-cut").onclick=()=>setMode("cut");
 $("t-cal").onclick=()=>setMode("cal");
 let dragStart=null, calPts=[];
@@ -767,7 +771,26 @@ function drawUi(){
 view.addEventListener("pointerdown",e=>{
   if (e.button!==0) return;
   const [x,y]=toCanvas(e);
-  if (mode==="cut") dragStart=[x,y];
+  if (mode==="cut"||mode==="rect") dragStart=[x,y];
+});
+view.addEventListener("pointermove",e=>{
+  if (!dragStart||(mode!=="cut"&&mode!=="rect")) return;
+  const [x,y]=toCanvas(e);
+  drawUi();
+  uiX.lineWidth=2/z;
+  if (mode==="cut"){
+    uiX.strokeStyle="#b3541e";
+    uiX.beginPath(); uiX.moveTo(dragStart[0],dragStart[1]); uiX.lineTo(x,y); uiX.stroke();
+  } else {
+    uiX.strokeStyle="#0f6b5c"; uiX.setLineDash([6/z,4/z]);
+    uiX.strokeRect(Math.min(dragStart[0],x),Math.min(dragStart[1],y),Math.abs(x-dragStart[0]),Math.abs(y-dragStart[1]));
+    uiX.setLineDash([]);
+    if (pxPerMm){
+      const a=Math.abs(x-dragStart[0])*Math.abs(y-dragStart[1])/((pxPerMm*1000)**2);
+      uiX.fillStyle="#0f6b5c"; uiX.font=(13/z)+"px sans-serif";
+      uiX.fillText(a.toLocaleString("nl-NL",{maximumFractionDigits:2})+" m²", Math.min(dragStart[0],x), Math.min(dragStart[1],y)-6/z);
+    }
+  }
 });
 view.addEventListener("pointerup",e=>{
   if (e.button!==0||!pdf) return;
@@ -775,9 +798,19 @@ view.addEventListener("pointerup",e=>{
   if (x<0||y<0||x>=W||y>=H) return;
   if (mode==="measure"){
     const fl=floodRegion(x,y);
-    if (!fl){ flash("Geen omsloten ruimte gevonden — klik binnen het gebouw, of sluit een opening met ✂️"); return; }
+    if (!fl){ flash("Geen omsloten ruimte gevonden — klik binnen het gebouw, teken een ▭ Vak, of sluit een opening met ✂️"); return; }
     const lbl=autoName(fl);
     addRoom(fl,lbl.name,lbl.ref,lbl.vl);
+  } else if (mode==="rect"&&dragStart){
+    const [a,b]=dragStart; dragStart=null; drawUi();
+    const minx=Math.max(0,Math.min(a,x)), maxx=Math.min(W-1,Math.max(a,x));
+    const miny=Math.max(0,Math.min(b,y)), maxy=Math.min(H-1,Math.max(b,y));
+    const bw=maxx-minx+1, bh=maxy-miny+1;
+    if (bw<6||bh<6) return;
+    const reg=new Uint8Array(bw*bh).fill(1);
+    const fl={reg,bw,bh,n:bw*bh,per:2*(bw+bh),minx,maxx,miny,maxy,page:pageNo,manual:true};
+    const lbl=autoName(fl);
+    addRoom(fl,lbl.name||"Vak",lbl.ref,lbl.vl);
   } else if (mode==="cut"&&dragStart){
     const [a,b]=dragStart; dragStart=null;
     if (Math.hypot(x-a,y-b)>4){ (cuts[pageNo]=cuts[pageNo]||[]).push([a,b,x,y]); rebuildMask(); drawUi(); }
