@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vlakmaat — m² uit je bouwtekening</title>
+<script src="pdf.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f6f8; --panel:#ffffff; --ink:#15202b; --mut:#61707f;
+    --line:#dde3ea; --acc:#0f6b5c; --acc-soft:#e3f2ee; --warn:#b3541e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font:14px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+  #app{display:flex;height:100%}
+  #side{width:350px;min-width:350px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+  #brand{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;justify-content:space-between}
+  #brand h1{margin:0;font-size:17px;letter-spacing:.2px}
+  #brand h1 span{color:var(--acc)}
+  #brand .sub{color:var(--mut);font-size:11.5px;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #tools{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tbtn{flex:1;min-width:86px;padding:7px 4px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:12.5px;text-align:center}
+  .tbtn.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .tbtn.wide{flex:100%}
+  #scalebar{padding:8px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--mut);display:flex;justify-content:space-between;align-items:center;gap:6px}
+  #scalebar b{color:var(--ink)}
+  #pagenav{display:flex;align-items:center;gap:4px}
+  #pagenav button{border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;padding:2px 8px}
+  #rooms{flex:1;overflow:auto;padding:6px 8px}
+  .room{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer}
+  .room:hover{background:#f2f5f7}
+  .room.dim{opacity:.45}
+  .sw{width:14px;height:14px;border-radius:4px;flex:none}
+  .rname{flex:1;min-width:0}
+  .rname input{width:100%;border:none;background:transparent;font:inherit;color:inherit;outline:none}
+  .rref{font-size:11px;color:var(--mut)}
+  .rm2{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .rdel{border:none;background:none;color:var(--mut);cursor:pointer;font-size:15px;padding:6px 8px;margin:-4px}
+  .rdel:hover{color:var(--warn)}
+  #types{border-top:1px solid var(--line)}
+  #types:empty{display:none}
+  .trow{display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:13px}
+  .tname{flex:1;min-width:0}
+  .tname input{width:100%;border:none;background:transparent;font:inherit;color:inherit;outline:none;font-weight:600}
+  .tchip{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.15);margin-right:4px;vertical-align:-1px;flex:none}
+  #totbar{border-top:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline}
+  #tot{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  #actions{display:flex;gap:8px;padding:0 12px 12px}
+  .abtn{flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:12.5px}
+  .abtn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+  #edgewrap{padding:8px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+  #edgewrap select{font:inherit;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:#fff;color:var(--ink)}
+  #viewwrap{flex:1;position:relative;overflow:hidden;background:#e8ebee}
+  #view{position:absolute;inset:0;cursor:crosshair}
+  canvas{position:absolute;left:0;top:0;transform-origin:0 0}
+  #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(21,32,43,.88);color:#fff;
+        padding:7px 14px;border-radius:20px;font-size:12.5px;pointer-events:none;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+  #drop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+        background:var(--bg);z-index:10;text-align:center;padding:30px}
+  #drop.hidden{display:none}
+  #drop .box{border:2px dashed #b9c4cf;border-radius:16px;padding:60px 70px;background:#fff;cursor:pointer;transition:border-color .2s}
+  #drop .box:hover,#drop.over .box{border-color:var(--acc)}
+  #drop h2{margin:0 0 6px;font-size:22px}
+  #drop h2 span{color:var(--acc)}
+  #drop p{margin:0;color:var(--mut)}
+  #drop .priv{font-size:12px;color:var(--mut);max-width:420px}
+  #busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(245,246,248,.85);z-index:9;flex-direction:column;gap:10px}
+  #busy.show{display:flex}
+  .spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  dialog{border:1px solid var(--line);border-radius:12px;padding:18px;font:inherit;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+  dialog::backdrop{background:rgba(21,32,43,.35)}
+  dialog input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;width:110px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <div id="brand">
+      <h1>Vlak<span>maat</span></h1>
+      <div class="sub" id="doctitle"></div>
+    </div>
+    <div id="tools">
+      <button class="tbtn wide" id="t-auto">⚡ Alle ruimtes herkennen</button>
+      <button class="tbtn on" id="t-measure">📐 Meten</button>
+      <button class="tbtn" id="t-cut">✂️ Knippen</button>
+      <button class="tbtn" id="t-cal">🎯 Kalibreren</button>
+    </div>
+    <div id="scalebar">
+      <span>Schaal: <b id="scaletxt">–</b></span>
+      <span id="pagenav"><button id="pprev">‹</button><span id="pcur">–</span><button id="pnext">›</button></span>
+      <button class="abtn" id="newpdf" style="flex:none;padding:4px 8px">andere PDF</button>
+    </div>
+    <div id="edgewrap">Meetrand: <select id="edge">
+      <option value="0">binnenkant wand (netto)</option>
+      <option value="50" selected>standaard (+5 cm rand)</option>
+      <option value="100">hart wand (+10 cm)</option>
+    </select></div>
+    <div id="rooms"></div>
+    <div id="types"></div>
+    <div id="totbar"><span>Totaal</span><span id="tot">0,00 m²</span></div>
+    <div id="actions">
+      <button class="abtn" id="clear">Wis alles</button>
+      <button class="abtn" id="cuts-clear">Wis kniplijnen</button>
+      <button class="abtn primary" id="csv">CSV</button>
+    </div>
+  </div>
+  <div id="viewwrap">
+    <div id="view">
+      <canvas id="c-bg"></canvas>
+      <canvas id="c-fill"></canvas>
+      <canvas id="c-ui"></canvas>
+    </div>
+    <div id="busy"><div class="spin"></div><div id="busytxt">Bezig…</div></div>
+    <div id="hint" style="display:none"></div>
+    <div id="drop">
+      <div class="box" id="dropbox">
+        <h2>Vlak<span>maat</span></h2>
+        <p><b>Sleep je bouwtekening-PDF hierheen</b><br>of klik om te bladeren</p>
+      </div>
+      <div class="priv">Je tekening wordt volledig in je eigen browser verwerkt en nergens geüpload.
+      Werkt met vector-PDF's uit Vectorworks, AutoCAD, Revit en ArchiCAD.</div>
+      <input type="file" id="file" accept="application/pdf" style="display:none">
+    </div>
+  </div>
+</div>
+<dialog id="caldlg">
+  <form method="dialog">
+    <p style="margin:0 0 10px"><b>Schaal kalibreren</b><br><span style="color:var(--mut);font-size:12.5px">
+    Je klikte twee punten. Hoeveel millimeter is die afstand in het echt?</span></p>
+    <input id="calmm" type="number" min="1" step="1" placeholder="bijv. 5400"> mm
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button value="cancel" class="abtn" style="flex:none">Annuleer</button>
+      <button value="ok" class="abtn primary" style="flex:none">Toepassen</button>
+    </div>
+  </form>
+</dialog>
+<script>
+"use strict";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js";
+const PALETTE = ["#2f7ed8","#e0812f","#2ca02c","#d64550","#9467bd","#8c564b","#e377c2","#17a2b2","#bcbd22","#5c6bc0"];
+const $ = id => document.getElementById(id);
+
+// ---------------- globale staat ----------------
+let pdf = null, pageNo = 1, numPages = 1, docTitle = "";
+let W=0, H=0, S=2.083;              // canvas-afmetingen, px per pt
+let maskBase=null, mask=null, sealPx=null;  // wand-inkt, verzegeld masker, alleen-verzegeling
+let bgData=null, labels=[], scaleDen=null, pxPerMm=null, vectorMode=true;
+let rooms=[], types=[], nextId=1, nextTypeId=1;
+let cuts={};                        // per pagina: [[x0,y0,x1,y1],...]
+let mode="measure";
+const bgC=$("c-bg"), fillC=$("c-fill"), uiC=$("c-ui");
+const bgX=bgC.getContext("2d"), fillX=fillC.getContext("2d"), uiX=uiC.getContext("2d");
+
+// ---------------- PDF laden ----------------
+async function loadPdf(buf, name){
+  showBusy("PDF openen…");
+  pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  numPages = pdf.numPages; docTitle = name||"tekening.pdf";
+  $("doctitle").textContent = docTitle;
+  rooms=[]; types=[]; cuts={}; nextId=1; nextTypeId=1;
+  $("drop").classList.add("hidden");
+  await showPage(1);
+}
+window.loadPdfFromUrl = async (url)=>{ const r=await fetch(url); await loadPdf(await r.arrayBuffer(), url.split("/").pop()); };
+
+let renderBusy=false, renderQueued=null, renderTask=null;
+async function showPage(n){
+  if (renderBusy){ renderQueued = n; return; }
+  renderBusy = true;
+  try {
+  pageNo = Math.max(1, Math.min(numPages, n));
+  $("pcur").textContent = pageNo + " / " + numPages;
+  showBusy("Pagina renderen…");
+  const page = await pdf.getPage(pageNo);
+  let vp = page.getViewport({scale: 150/72});
+  if (vp.width*vp.height > 13e6){                    // groot formaat: begrens
+    const f = Math.sqrt(13e6/(vp.width*vp.height));
+    vp = page.getViewport({scale: 150/72*f});
+  }
+  S = vp.scale; W = Math.round(vp.width); H = Math.round(vp.height);
+  for (const c of [bgC,fillC,uiC]){ c.width=W; c.height=H; }
+  if (renderTask){ try{ renderTask.cancel(); await renderTask.promise.catch(()=>{}); }catch(e){} }
+  renderTask = page.render({canvasContext: bgX, viewport: vp, intent: "print"});
+  await renderTask.promise;
+  renderTask = null;
+  bgData = null;
+
+  showBusy("Tekst en schaal lezen…");
+  const tc = await page.getTextContent();
+  labels = [];
+  let alltxt = [];
+  for (const it of tc.items){
+    if (!it.str || !it.str.trim()) continue;
+    alltxt.push(it.str);
+    const t = it.transform;
+    const size = Math.hypot(t[0], t[1]) || Math.hypot(t[2],t[3]);
+    const [cx, cy] = vp.convertToViewportPoint(t[4] + (it.width||0)/2, t[5] + size*0.35);
+    labels.push({t: it.str.trim(), x: cx, y: cy, s: size});
+  }
+  const m = alltxt.join(" ").match(/1\s*[:∶]\s*(\d{1,4})\b/g);
+  scaleDen = null;
+  if (m){
+    const vals = m.map(x=>+x.replace(/^1\s*[:∶]\s*/,"")).filter(v=>v>=10&&v<=2000);
+    if (vals.length) scaleDen = vals.sort((a,b)=>vals.filter(v=>v===a).length-vals.filter(v=>v===b).length).pop();
+  }
+  if (scaleDen){ setScaleDen(scaleDen); } else { pxPerMm=null; $("scaletxt").textContent="onbekend"; }
+
+  showBusy("Wanden herkennen…");
+  await new Promise(r=>setTimeout(r,20));
+  const opl = await page.getOperatorList();
+  buildMaskFromOps(opl, vp);
+  rebuildMask();
+  seedTypes();
+  fitView(); repaintAll(); renderList();
+  hideBusy();
+  if (!scaleDen) flash("Schaal niet gevonden — gebruik 🎯 Kalibreren op een bekende maat");
+  else flash("Klik in een ruimte, of gebruik ⚡ om alles te herkennen");
+  } finally {
+    renderBusy = false;
+    if (renderQueued!==null && renderQueued!==pageNo){ const q=renderQueued; renderQueued=null; showPage(q); }
+    else renderQueued=null;
+  }
+}
+function setScaleDen(den){
+  const mmPerPt = 25.4/72*den;
+  pxPerMm = S/mmPerPt;
+  $("scaletxt").textContent = "1:"+den;
+}
+
+// ---------------- masker uit vectorgeometrie ----------------
+function buildMaskFromOps(opl, vp){
+  const OPS = pdfjsLib.OPS;
+  const mc = document.createElement("canvas"); mc.width=W; mc.height=H;
+  const mx = mc.getContext("2d");
+  mx.lineCap="round"; mx.strokeStyle="#000";
+  const mul=(m,n)=>[m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
+  let T = vp.transform.slice(), lw=1, dark=true;
+  const stack=[];
+  let path=[], strokes=0;
+  const flushStroke = ()=>{
+    if (!dark || !path.length) { path=[]; return; }
+    const sc = Math.hypot(T[0],T[1]) || 1;
+    mx.lineWidth = Math.max(1, lw*sc);
+    mx.beginPath();
+    for (const sp of path){
+      if (sp.length<2) continue;
+      mx.moveTo(sp[0][0], sp[0][1]);
+      for (let i=1;i<sp.length;i++) mx.lineTo(sp[i][0], sp[i][1]);
+    }
+    mx.stroke(); strokes++;
+    path=[];
+  };
+  const ap=(x,y)=>[T[0]*x+T[2]*y+T[4], T[1]*x+T[3]*y+T[5]];
+  for (let i=0;i<opl.fnArray.length;i++){
+    const fn=opl.fnArray[i], a=opl.argsArray[i];
+    if (fn===OPS.save) stack.push([T.slice(),lw,dark]);
+    else if (fn===OPS.restore){ const s=stack.pop(); if(s){T=s[0];lw=s[1];dark=s[2];} }
+    else if (fn===OPS.transform) T=mul(T,a);
+    else if (fn===OPS.setLineWidth) lw=a[0];
+    else if (fn===OPS.setStrokeRGBColor||fn===OPS.setStrokeColor){
+      const c=a.length>=3?[a[0],a[1],a[2]]:[0,0,0];
+      const l=(0.299*c[0]+0.587*c[1]+0.114*c[2])/(c[0]>1||c[1]>1||c[2]>1?255:1);
+      dark = l < 0.5;
+    }
+    else if (fn===OPS.setStrokeGray) dark = a[0] < 0.5;
+    else if (fn===OPS.setStrokeCMYKColor) dark = (1-a[3])*(3-a[0]-a[1]-a[2])/3 < 0.5;
+    else if (fn===OPS.constructPath){
+      const pathOps=a[0], co=a[1];
+      let k=0, cur=null;
+      for (const po of pathOps){
+        if (po===OPS.moveTo){ cur=[ap(co[k],co[k+1])]; path.push(cur); k+=2; }
+        else if (po===OPS.lineTo){ if(cur) cur.push(ap(co[k],co[k+1])); k+=2; }
+        else if (po===OPS.curveTo){ if(cur){cur.push(ap(co[k],co[k+1]),ap(co[k+2],co[k+3]),ap(co[k+4],co[k+5]));} k+=6; }
+        else if (po===OPS.curveTo2||po===OPS.curveTo3){ if(cur){cur.push(ap(co[k],co[k+1]),ap(co[k+2],co[k+3]));} k+=4; }
+        else if (po===OPS.closePath){ if(cur&&cur.length) cur.push(cur[0]); }
+        else if (po===OPS.rectangle){
+          const [x,y,w2,h2]=[co[k],co[k+1],co[k+2],co[k+3]]; k+=4;
+          path.push([ap(x,y),ap(x+w2,y),ap(x+w2,y+h2),ap(x,y+h2),ap(x,y)]);
+        }
+      }
+    }
+    else if (fn===OPS.stroke||fn===OPS.closeStroke||fn===OPS.fillStroke||fn===OPS.eoFillStroke||fn===OPS.closeFillStroke||fn===OPS.closeEOFillStroke) flushStroke();
+    else if (fn===OPS.fill||fn===OPS.eoFill||fn===OPS.endPath) path=[];
+  }
+  const d = mx.getImageData(0,0,W,H).data;
+  maskBase = new Uint8Array(W*H);
+  let inkN=0;
+  for (let i=0;i<W*H;i++){ if (d[i*4+3]>60){ maskBase[i]=1; inkN++; } }
+  for (let b=0;b<3;b++){
+    for (let x=0;x<W;x++){ maskBase[b*W+x]=0; maskBase[(H-1-b)*W+x]=0; }
+    for (let y=0;y<H;y++){ maskBase[y*W+b]=0; maskBase[y*W+W-1-b]=0; }
+  }
+  vectorMode = strokes > 60;
+  if (!vectorMode){
+    // scan of platgeslagen PDF: drempel op de weergave
+    if (!bgData) bgData = bgX.getImageData(0,0,W,H).data;
+    for (let i=0;i<W*H;i++){
+      const o=i*4, r=bgData[o],g=bgData[o+1],b=bgData[o+2];
+      maskBase[i] = (0.299*r+0.587*g+0.114*b) < 120 ? 1 : 0;
+    }
+    flash("Geen vectorlijnen gevonden — rastermodus (minder precies)");
+  }
+}
+
+// 1D-sluiting per rij en kolom; verzegelt deuropeningen
+function rebuildMask(){
+  mask = maskBase.slice();
+  const pc = cuts[pageNo]||[];
+  if (pc.length){
+    const t=document.createElement("canvas"); t.width=W; t.height=H;
+    const x=t.getContext("2d"); x.lineWidth=3; x.strokeStyle="#000"; x.lineCap="round";
+    for (const [a,b,c,d2] of pc){ x.beginPath(); x.moveTo(a,b); x.lineTo(c,d2); x.stroke(); }
+    const d=x.getImageData(0,0,W,H).data;
+    for (let i=0;i<W*H;i++) if (d[i*4+3]>60) mask[i]=1;
+  }
+  const gapMm = 1100;
+  const gap = pxPerMm ? Math.max(3, Math.round(gapMm*pxPerMm)) : 26;
+  const hcl = new Uint8Array(W*H), vcl = new Uint8Array(W*H);
+  for (let y=0;y<H;y++){                    // horizontale sluiting
+    const o=y*W; let last=-1;
+    for (let x=0;x<W;x++){
+      if (mask[o+x]){ if(last>=0 && x-last-1<=gap && x-last-1>0) hcl.fill(1,o+last+1,o+x); last=x; }
+    }
+  }
+  for (let x=0;x<W;x++){                    // verticale sluiting
+    let last=-1;
+    for (let y=0;y<H;y++){
+      if (mask[y*W+x]){ if(last>=0 && y-last-1<=gap && y-last-1>0){ for(let yy=last+1;yy<y;yy++) vcl[yy*W+x]=1; } last=y; }
+    }
+  }
+  sealPx = new Uint8Array(W*H);
+  for (let i=0;i<W*H;i++) if (hcl[i]&&vcl[i]&&!mask[i]){ sealPx[i]=1; mask[i]=1; }
+}
+
+// ---------------- vloedvulling ----------------
+let scratch=null, scratchGen=0, stackBuf=null;
+function floodRegion(sx, sy){
+  if (!scratch || scratch.length!==W*H){ scratch=new Int32Array(W*H); scratchGen=0; stackBuf=new Int32Array(W*H); }
+  const idx0=sy*W+sx;
+  if (mask[idx0]){
+    let found=-1;
+    outer: for (let r=1;r<14;r++)
+      for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++){
+        const x=sx+dx,y=sy+dy;
+        if (x<0||y<0||x>=W||y>=H) continue;
+        if (!mask[y*W+x]){ found=y*W+x; break outer; }
+      }
+    if (found<0) return null;
+    sx=found%W; sy=(found-sx)/W;
+  }
+  const g=++scratchGen;
+  let sp=0, n=0, minx=sx,maxx=sx,miny=sy,maxy=sy, touchesBorder=false;
+  stackBuf[sp++]=sy*W+sx; scratch[sy*W+sx]=g;
+  while (sp){
+    const i=stackBuf[--sp]; n++;
+    const x=i%W, y=(i-x)/W;
+    if (x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+    if (x===0||y===0||x===W-1||y===H-1) touchesBorder=true;
+    if (x>0   && scratch[i-1]!==g && !mask[i-1]){ scratch[i-1]=g; stackBuf[sp++]=i-1; }
+    if (x<W-1 && scratch[i+1]!==g && !mask[i+1]){ scratch[i+1]=g; stackBuf[sp++]=i+1; }
+    if (y>0   && scratch[i-W]!==g && !mask[i-W]){ scratch[i-W]=g; stackBuf[sp++]=i-W; }
+    if (y<H-1 && scratch[i+W]!==g && !mask[i+W]){ scratch[i+W]=g; stackBuf[sp++]=i+W; }
+  }
+  if (touchesBorder || n>W*H*0.5) return null;
+  const bw=maxx-minx+1, bh=maxy-miny+1;
+  const reg=new Uint8Array(bw*bh);
+  for (let y=miny;y<=maxy;y++){ const o=y*W, ro=(y-miny)*bw;
+    for (let x=minx;x<=maxx;x++) if (scratch[o+x]===g) reg[ro+x-minx]=1; }
+
+  // --- gaten vullen (meubels): open vlakken in bbox die de rand niet halen
+  const g2=++scratchGen; let sp2=0;
+  const push2=(x,y)=>{ const i=y*W+x; if (x<0||y<0||x>=W||y>=H) return;
+    if (scratch[i]!==g2 && scratch[i]!==g && !mask[i]){ scratch[i]=g2; stackBuf[sp2++]=i; } };
+  for (let x=minx-1;x<=maxx+1;x++){ push2(x,miny-1); push2(x,maxy+1); }
+  for (let y=miny-1;y<=maxy+1;y++){ push2(minx-1,y); push2(maxx+1,y); }
+  while (sp2){
+    const i=stackBuf[--sp2]; const x=i%W,y=(i-x)/W;
+    if (x>minx-1) push2(x-1,y); if (x<maxx+1) push2(x+1,y);
+    if (y>miny-1) push2(x,y-1); if (y<maxy+1) push2(x,y+1);
+  }
+  let holes=0; const holeIdx=[];
+  for (let y=miny;y<=maxy;y++){ const o=y*W, ro=(y-miny)*bw;
+    for (let x=minx;x<=maxx;x++){ const i=o+x;
+      if (!reg[ro+x-minx] && !mask[i] && scratch[i]!==g2){ reg[ro+x-minx]=2; holeIdx.push(ro+x-minx); holes++; } } }
+  if (holes > n){            // ontaard: dit is een ring, geen kamer met meubels
+    for (const k of holeIdx) reg[k]=0;
+    holes=0;
+  }
+
+  // --- deurpockets terughalen: verzegelde vlakken die groot en diep genoeg
+  // zijn om geen deurstrip of wandkern te zijn, en aan de kamer grenzen
+  if (sealPx && pxPerMm){
+    const minArea = Math.round(0.15*(pxPerMm*1000)**2);
+    const maxComp = minArea*14;
+    const minDepth = Math.max(5, Math.round(110*pxPerMm));
+    const gSealStart = scratchGen;
+    for (let y0=miny;y0<=maxy;y0++){
+      for (let x0=minx;x0<=maxx;x0++){
+        const i0=y0*W+x0;
+        if (!sealPx[i0] || scratch[i0]>gSealStart) continue;
+        const gC=++scratchGen;
+        let sp3=0, cnt3=0, touch=false, over=false;
+        const comp=[];
+        stackBuf[sp3++]=i0; scratch[i0]=gC;
+        while (sp3){
+          const j=stackBuf[--sp3];
+          if (!over){ comp.push(j); }
+          cnt3++;
+          if (cnt3>maxComp) over=true;
+          const xj=j%W;
+          for (const dj of [-1,1,-W,W]){
+            const k=j+dj;
+            if (k<0||k>=W*H) continue;
+            if (Math.abs((k%W)-xj)>1) continue;
+            if (sealPx[k]){ if (scratch[k]<gC){ scratch[k]=gC; stackBuf[sp3++]=k; } }
+            else if (!touch && !mask[k]){
+              const xk=k%W, yk=(k-xk)/W;
+              if (xk>=minx&&xk<=maxx&&yk>=miny&&yk<=maxy && reg[(yk-miny)*bw+xk-minx]===1) touch=true;
+            }
+          }
+        }
+        if (over || !touch || comp.length<minArea) continue;
+        // diepte via lagen-BFS vanaf de componentrand
+        const depth=new Map(); let frontier=[];
+        for (const j of comp){
+          const xj=j%W; let edge=false;
+          for (const dj of [-1,1,-W,W]){
+            const k=j+dj;
+            if (k<0||k>=W*H||Math.abs((k%W)-xj)>1||!sealPx[k]||scratch[k]!==gC){ edge=true; break; }
+          }
+          if (edge){ depth.set(j,0); frontier.push(j); }
+        }
+        let dmax=0;
+        while (frontier.length){
+          const nf=[];
+          for (const j of frontier){
+            const d0=depth.get(j), xj=j%W;
+            for (const dj of [-1,1,-W,W]){
+              const k=j+dj;
+              if (k<0||k>=W*H||Math.abs((k%W)-xj)>1) continue;
+              if (sealPx[k]&&scratch[k]===gC&&!depth.has(k)){ depth.set(k,d0+1); nf.push(k); if(d0+1>dmax)dmax=d0+1; }
+            }
+          }
+          frontier=nf;
+        }
+        if (dmax<minDepth) continue;
+        for (const j of comp){
+          const xj=j%W, yj=(j-xj)/W;
+          if (xj>=minx&&xj<=maxx&&yj>=miny&&yj<=maxy){
+            const ri=(yj-miny)*bw+xj-minx;
+            if (!reg[ri]){ reg[ri]=3; holes++; }
+          }
+        }
+      }
+    }
+  }
+  let per=0, cnt=0;
+  for (let y=miny;y<=maxy;y++){ const ro=(y-miny)*bw;
+    for (let x=minx;x<=maxx;x++){
+      if (!reg[ro+x-minx]) continue; cnt++;
+      const l=x>minx?reg[ro+x-1-minx]:0, r=x<maxx?reg[ro+x+1-minx]:0;
+      const u=y>miny?reg[(y-miny-1)*bw+x-minx]:0, d2=y<maxy?reg[(y-miny+1)*bw+x-minx]:0;
+      if (!l||!r||!u||!d2) per++;
+    } }
+  return {reg, bw, bh, n:cnt, per, minx, maxx, miny, maxy, page:pageNo};
+}
+
+// ---------------- alles herkennen ----------------
+async function detectAll(){
+  if (!mask){ return; }
+  showBusy("Alle ruimtes herkennen…");
+  await new Promise(r=>setTimeout(r,30));
+  const claimed = new Uint8Array(W*H);
+  for (const r of rooms) if (r.fl.page===pageNo) stampClaim(r.fl, claimed);
+  const minM2 = 1.5, maxM2 = 3000;
+  const apx = pxPerMm ? 1/((pxPerMm*1000)**2) : null;
+  const found=[];
+  const step = 3;
+  for (let y=step;y<H-step;y+=step){
+    const o=y*W;
+    for (let x=step;x<W-step;x+=step){
+      const i=o+x;
+      if (mask[i]||claimed[i]) continue;
+      const fl = floodRegion(x,y);
+      if (fl){ stampClaim(fl, claimed);
+        if (fl.n > W*H*0.35) continue;
+        if (apx){ const a=fl.n*apx; if (a>=minM2 && a<=maxM2) found.push(fl); }
+        else found.push(fl);
+      } else {
+        // buitengebied: claim via scratch zodat we niet blijven proberen
+        claimOutside(x,y,claimed);
+      }
+    }
+  }
+  found.sort((a,b)=>b.n-a.n);
+  // als de tekening kamerlabels heeft, is een regio zonder label
+  // vrijwel zeker legenda, techniek of buitenruimte
+  const hasLabels = roomLabels().length >= 5;
+  let added=0;
+  for (const fl of found){
+    const lbl=autoName(fl);
+    if (hasLabels && !lbl.name && !lbl.ref) continue;
+    addRoom(fl, lbl.name, lbl.ref, lbl.vl, true);
+    added++;
+  }
+  renderList(); hideBusy();
+  flash(added+" ruimtes gevonden — verwijder wat je niet nodig hebt, klik bij voor wat mist");
+}
+function stampClaim(fl, claimed){
+  for (let y=fl.miny;y<=fl.maxy;y++){ const o=y*W, ro=(y-fl.miny)*fl.bw;
+    for (let x=fl.minx;x<=fl.maxx;x++) if (fl.reg[ro+x-fl.minx]) claimed[o+x]=1; }
+}
+function claimOutside(sx,sy,claimed){
+  let sp=0; const i0=sy*W+sx;
+  if (mask[i0]||claimed[i0]) return;
+  stackBuf[sp++]=i0; claimed[i0]=1;
+  while (sp){
+    const i=stackBuf[--sp]; const x=i%W;
+    if (x>0 && !claimed[i-1] && !mask[i-1]){claimed[i-1]=1;stackBuf[sp++]=i-1;}
+    if (x<W-1 && !claimed[i+1] && !mask[i+1]){claimed[i+1]=1;stackBuf[sp++]=i+1;}
+    if (i-W>=0 && !claimed[i-W] && !mask[i-W]){claimed[i-W]=1;stackBuf[sp++]=i-W;}
+    if (i+W<W*H && !claimed[i+W] && !mask[i+W]){claimed[i+W]=1;stackBuf[sp++]=i+W;}
+  }
+}
+
+// ---------------- vloertypes ----------------
+function ensureBg(){ if (!bgData) bgData = bgX.getImageData(0,0,W,H).data; }
+function sampleColor(fl){
+  ensureBg();
+  const buckets=new Map();
+  const step=Math.max(1, Math.round(Math.sqrt(fl.n/40000)));
+  for (let y=fl.miny;y<=fl.maxy;y+=step){ const ro=(y-fl.miny)*fl.bw;
+    for (let x=fl.minx;x<=fl.maxx;x+=step){
+      if (fl.reg[ro+x-fl.minx]!==1) continue;
+      const o=(y*W+x)*4, r=bgData[o],g=bgData[o+1],b=bgData[o+2];
+      if (r>225&&g>225&&b>225) continue;
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+      if (mx-mn<14 && mx>190) continue;
+      const k=((r>>4)<<8)|((g>>4)<<4)|(b>>4);
+      const e=buckets.get(k)||[0,0,0,0]; e[0]++;e[1]+=r;e[2]+=g;e[3]+=b; buckets.set(k,e);
+    } }
+  let best=null,tot=0;
+  for (const e of buckets.values()){ tot+=e[0]; if(!best||e[0]>best[0])best=e; }
+  if (!best || best[0]<Math.max(30,tot*0.15)) return null;
+  return [best[1]/best[0],best[2]/best[0],best[3]/best[0]].map(Math.round);
+}
+function sampleRing(cx,cy){
+  ensureBg();
+  const buckets=new Map();
+  for (let dy=-50;dy<=50;dy+=2) for (let dx=-50;dx<=50;dx+=2){
+    if (Math.abs(dx)<22&&Math.abs(dy)<12) continue;
+    const x=cx+dx,y=cy+dy;
+    if (x<0||y<0||x>=W||y>=H) continue;
+    const o=(y*W+x)*4, r=bgData[o],g=bgData[o+1],b=bgData[o+2];
+    if (r>225&&g>225&&b>225) continue;
+    if (r>200&&g>170&&b<130) continue;
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+    if (mx-mn<14&&mx>190) continue;
+    const k=((r>>4)<<8)|((g>>4)<<4)|(b>>4);
+    const e=buckets.get(k)||[0,0,0,0]; e[0]++;e[1]+=r;e[2]+=g;e[3]+=b; buckets.set(k,e);
+  }
+  let best=null;
+  for (const e of buckets.values()) if(!best||e[0]>best[0]) best=e;
+  if (!best||best[0]<40) return null;
+  return [best[1]/best[0],best[2]/best[0],best[3]/best[0]].map(Math.round);
+}
+const cdist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+function seedTypes(){
+  const seen=new Map();
+  for (const l of labels){
+    if (!/^VL[.\s]?\d{1,2}$/i.test(l.t) || l.s>16) continue;
+    const code=l.t.toUpperCase().replace(/\s/,"");
+    const rgb=sampleRing(Math.round(l.x),Math.round(l.y));
+    if (!rgb) continue;
+    if (!seen.has(code)) seen.set(code,[]);
+    seen.get(code).push(rgb);
+  }
+  for (const [code,cs] of [...seen.entries()].sort()){
+    if (types.some(t=>t.name===code)) continue;
+    const rgb=[0,1,2].map(i=>Math.round(cs.reduce((a,c)=>a+c[i],0)/cs.length));
+    types.push({id:nextTypeId++, name:code, rgb, fixed:true});
+  }
+}
+function assignType(fl, vlCode){
+  const rgb=sampleColor(fl);
+  if (vlCode){
+    let t=types.find(t=>t.name===vlCode);
+    if (!t){ t={id:nextTypeId++, name:vlCode, rgb, fixed:true}; types.push(t); }
+    else if (rgb&&!t.rgb) t.rgb=rgb;
+    return t.id;
+  }
+  if (!rgb) return null;
+  let bestT=null,bestD=1e9;
+  for (const t of types){ if(!t.rgb)continue; const d=cdist(rgb,t.rgb); if(d<bestD){bestD=d;bestT=t;} }
+  if (bestT && bestD < (bestT.fixed?55:34)) return bestT.id;
+  const t={id:nextTypeId++, name:"Vloertype "+nextTypeId, rgb, fixed:false};
+  types.push(t); return t.id;
+}
+
+// ---------------- namen ----------------
+function roomLabels(){
+  return labels.filter(l=>!/\d+\s*mm/i.test(l.t) && !/^[\d.,]+$/.test(l.t) && l.t.length>1 && l.s>=3.4 && l.s<13);
+}
+function autoName(fl){
+  const inside=[];
+  for (const l of roomLabels()){
+    const x=Math.round(l.x), y=Math.round(l.y);
+    if (x>=fl.minx&&x<=fl.maxx&&y>=fl.miny&&y<=fl.maxy&&fl.reg[(y-fl.miny)*fl.bw+x-fl.minx]) inside.push(l);
+  }
+  let refs=[], parts=[], vl=null;
+  for (const l of inside){
+    const m=l.t.match(/Opp\.?:?\s*([\d.,]+)\s*m2/i);
+    if (m){ refs.push(parseFloat(m[1].replace(",","."))); continue; }
+    const v=l.t.match(/^VL[.\s]?\d{1,2}$/i);
+    if (v){ vl=l.t.toUpperCase().replace(/\s/,""); continue; }
+    if (l.t.length<=24 && !parts.includes(l.t)) parts.push(l.t);
+  }
+  let ref=null;
+  if (refs.length===1) ref=refs[0].toLocaleString("nl-NL",{minimumFractionDigits:2})+" m²";
+  else if (refs.length>1) ref=refs.reduce((a,b)=>a+b,0).toLocaleString("nl-NL",{minimumFractionDigits:2})+" m² ("+refs.length+" zones samen)";
+  return {name: parts.slice(0,3).join(" · ").trim()||null, ref, vl};
+}
+
+// ---------------- kamers + lijst ----------------
+function m2Of(r){
+  if (!pxPerMm) return null;
+  const apx=1/((pxPerMm*1000)**2);
+  const edge=+$("edge").value/1000;
+  return r.fl.n*apx + (r.fl.per/pxPerMm/1000)*edge;
+}
+const fmt=v=>v==null?"– m²":v.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2})+" m²";
+function addRoom(fl,name,ref,vlCode,quiet){
+  const color=PALETTE[(nextId-1)%PALETTE.length];
+  const room={id:nextId++, name:name||("Ruimte "+nextId), ref:ref||null, fl, color, typeId:assignType(fl,vlCode)};
+  rooms.push(room);
+  paintRoom(room);
+  if (!quiet) renderList();
+  return room;
+}
+function paintRoom(room){
+  const {fl,color}=room;
+  if (fl.page!==pageNo) return;
+  const im=fillX.createImageData(fl.bw,fl.bh);
+  const cr=parseInt(color.slice(1,3),16),cg=parseInt(color.slice(3,5),16),cb=parseInt(color.slice(5,7),16);
+  for (let k=0;k<fl.bw*fl.bh;k++){
+    const o=k*4; im.data[o]=cr; im.data[o+1]=cg; im.data[o+2]=cb; im.data[o+3]=fl.reg[k]?110:0;
+  }
+  const t=document.createElement("canvas"); t.width=fl.bw; t.height=fl.bh;
+  t.getContext("2d").putImageData(im,0,0);
+  fillX.drawImage(t, fl.minx, fl.miny);
+}
+function repaintAll(){
+  fillX.clearRect(0,0,W,H);
+  for (const r of rooms) paintRoom(r);
+  drawUi();
+}
+function renderList(){
+  const el=$("rooms"); el.innerHTML="";
+  let tot=0;
+  for (const r of rooms){
+    const a=m2Of(r); if(a)tot+=a;
+    const t=types.find(t=>t.id===r.typeId);
+    const row=document.createElement("div");
+    row.className="room"+(r.fl.page!==pageNo?" dim":"");
+    row.innerHTML=`<span class="sw" style="background:${r.color}"></span>
+      <span class="rname"><input value="${r.name.replace(/"/g,'&quot;')}">
+      <div class="rref">${numPages>1?"p"+r.fl.page+" · ":""}${t?`<span class="tchip" style="background:rgb(${t.rgb||[200,200,200]})"></span>${t.name}`:""}${t&&r.ref?" · ":""}${r.ref?`tekening: ${r.ref}`:""}</div></span>
+      <span class="rm2">${fmt(a)}</span><button class="rdel" title="verwijder">✕</button>`;
+    row.querySelector("input").addEventListener("change",e=>{r.name=e.target.value;});
+    row.querySelector(".rdel").addEventListener("click",e=>{
+      e.stopPropagation(); rooms=rooms.filter(x=>x!==r); repaintAll(); renderList();
+    });
+    el.appendChild(row);
+  }
+  const sums=new Map();
+  for (const r of rooms){ const a=m2Of(r)||0; const k=r.typeId??"x"; sums.set(k,(sums.get(k)||0)+a); }
+  const tp=$("types"); tp.innerHTML="";
+  if (sums.size>1||(sums.size===1&&!sums.has("x"))){
+    for (const [k,v] of [...sums.entries()].sort((a,b)=>b[1]-a[1])){
+      const t=types.find(t=>t.id===k);
+      const row=document.createElement("div");
+      row.className="trow";
+      row.innerHTML=`<span class="tchip" style="background:rgb(${t?.rgb||[200,200,200]})"></span>
+        <span class="tname">${t?`<input value="${t.name.replace(/"/g,'&quot;')}">`:"zonder type"}</span>
+        <span class="rm2">${fmt(v)}</span>`;
+      if (t) row.querySelector("input").addEventListener("change",e=>{t.name=e.target.value;renderList();});
+      tp.appendChild(row);
+    }
+  }
+  $("tot").textContent=fmt(tot||0);
+}
+$("edge").addEventListener("change",renderList);
+$("clear").addEventListener("click",()=>{rooms=[];repaintAll();renderList();});
+$("cuts-clear").addEventListener("click",()=>{cuts[pageNo]=[];rebuildMask();drawUi();});
+$("t-auto").addEventListener("click",detectAll);
+
+// ---------------- CSV ----------------
+$("csv").addEventListener("click",()=>{
+  const lines=[["Ruimte","Pagina","Vloertype","Oppervlakte (m2)","Referentie tekening"].join(";")];
+  let tot=0; const sums=new Map();
+  for (const r of rooms){
+    const a=m2Of(r)||0; tot+=a;
+    const t=types.find(t=>t.id===r.typeId);
+    if (t) sums.set(t.name,(sums.get(t.name)||0)+a);
+    lines.push([`"${r.name}"`, r.fl.page, t?`"${t.name}"`:"", a.toFixed(2).replace(".",","), r.ref?`"${r.ref}"`:""].join(";"));
+  }
+  lines.push("");
+  for (const [n,v] of [...sums.entries()].sort((a,b)=>b[1]-a[1]))
+    lines.push([`"Totaal ${n}"`,"","",v.toFixed(2).replace(".",","),""].join(";"));
+  lines.push(["Totaal","","",tot.toFixed(2).replace(".",","),""].join(";"));
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=(docTitle.replace(/\.pdf$/i,"")||"vlakmaat")+"_m2.csv";
+  a.click();
+});
+
+// ---------------- pan/zoom ----------------
+const view=$("view"), wrap=$("viewwrap");
+let z=1,tx=0,ty=0;
+function applyT(){ for (const c of [bgC,fillC,uiC]) c.style.transform=`translate(${tx}px,${ty}px) scale(${z})`; }
+function fitView(){
+  z=Math.min(wrap.clientWidth/W, wrap.clientHeight/H)||1;
+  tx=(wrap.clientWidth-W*z)/2; ty=(wrap.clientHeight-H*z)/2; applyT();
+}
+window.addEventListener("resize",fitView);
+wrap.addEventListener("wheel",e=>{
+  e.preventDefault();
+  if (e.ctrlKey||Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+    const f=Math.exp(-e.deltaY*0.0015);
+    const r=wrap.getBoundingClientRect();
+    const mx2=e.clientX-r.left,my2=e.clientY-r.top;
+    tx=mx2-(mx2-tx)*f; ty=my2-(my2-ty)*f; z*=f;
+  } else tx-=e.deltaX;
+  applyT();
+},{passive:false});
+let panning=false,px0=0,py0=0;
+wrap.addEventListener("pointerdown",e=>{ if(e.button===2||e.button===1){panning=true;px0=e.clientX;py0=e.clientY;} });
+window.addEventListener("pointermove",e=>{ if(panning){tx+=e.clientX-px0;ty+=e.clientY-py0;px0=e.clientX;py0=e.clientY;applyT();} });
+window.addEventListener("pointerup",()=>panning=false);
+wrap.addEventListener("contextmenu",e=>e.preventDefault());
+const toCanvas=e=>{
+  const r=wrap.getBoundingClientRect();
+  return [Math.round((e.clientX-r.left-tx)/z), Math.round((e.clientY-r.top-ty)/z)];
+};
+
+// ---------------- gereedschap ----------------
+function setMode(m){
+  mode=m;
+  for (const id of ["measure","cut","cal"]) $("t-"+id).classList.toggle("on",id===m);
+  flash(m==="measure"?"Klik in een ruimte om te meten"
+      : m==="cut"?"Sleep een lijn om een doorgang te sluiten of een zone te splitsen"
+      : "Klik twee punten van een bekende afstand (bijv. een maatlijn)");
+}
+$("t-measure").onclick=()=>setMode("measure");
+$("t-cut").onclick=()=>setMode("cut");
+$("t-cal").onclick=()=>setMode("cal");
+let dragStart=null, calPts=[];
+function drawUi(){
+  uiX.clearRect(0,0,W,H);
+  uiX.lineWidth=3/z; uiX.strokeStyle="#b3541e";
+  for (const [a,b,c,d] of (cuts[pageNo]||[])){ uiX.beginPath();uiX.moveTo(a,b);uiX.lineTo(c,d);uiX.stroke(); }
+  if (calPts.length){ uiX.fillStyle="#0f6b5c";
+    for (const [x,y] of calPts){ uiX.beginPath();uiX.arc(x,y,5/z,0,7);uiX.fill(); } }
+}
+view.addEventListener("pointerdown",e=>{
+  if (e.button!==0) return;
+  const [x,y]=toCanvas(e);
+  if (mode==="cut") dragStart=[x,y];
+});
+view.addEventListener("pointerup",e=>{
+  if (e.button!==0||!pdf) return;
+  const [x,y]=toCanvas(e);
+  if (x<0||y<0||x>=W||y>=H) return;
+  if (mode==="measure"){
+    const fl=floodRegion(x,y);
+    if (!fl){ flash("Geen omsloten ruimte gevonden — klik binnen het gebouw, of sluit een opening met ✂️"); return; }
+    const lbl=autoName(fl);
+    addRoom(fl,lbl.name,lbl.ref,lbl.vl);
+  } else if (mode==="cut"&&dragStart){
+    const [a,b]=dragStart; dragStart=null;
+    if (Math.hypot(x-a,y-b)>4){ (cuts[pageNo]=cuts[pageNo]||[]).push([a,b,x,y]); rebuildMask(); drawUi(); }
+  } else if (mode==="cal"){
+    calPts.push([x,y]); drawUi();
+    if (calPts.length===2) $("caldlg").showModal();
+  }
+});
+$("caldlg").addEventListener("close",()=>{
+  if ($("caldlg").returnValue==="ok"){
+    const mm=+$("calmm").value;
+    if (mm>0&&calPts.length===2){
+      const d=Math.hypot(calPts[1][0]-calPts[0][0],calPts[1][1]-calPts[0][1]);
+      pxPerMm=d/mm;
+      $("scaletxt").textContent="gekalibreerd";
+      rebuildMask(); renderList();
+    }
+  }
+  calPts=[]; drawUi(); setMode("measure");
+});
+let flashT=null;
+function flash(msg){
+  const h=$("hint"); h.textContent=msg; h.style.display="block";
+  clearTimeout(flashT); flashT=setTimeout(()=>h.style.display="none",5000);
+}
+function showBusy(t){ $("busytxt").textContent=t; $("busy").classList.add("show"); }
+function hideBusy(){ $("busy").classList.remove("show"); }
+
+// ---------------- upload/drag/pagina's ----------------
+$("dropbox").addEventListener("click",()=>$("file").click());
+$("file").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  await loadPdf(await f.arrayBuffer(), f.name);
+});
+const dropEl=$("drop");
+for (const el of [dropEl, wrap]){
+  el.addEventListener("dragover",e=>{e.preventDefault();dropEl.classList.add("over");});
+  el.addEventListener("dragleave",()=>dropEl.classList.remove("over"));
+  el.addEventListener("drop",async e=>{
+    e.preventDefault(); dropEl.classList.remove("over");
+    const f=e.dataTransfer.files[0];
+    if (f&&f.type==="application/pdf") await loadPdf(await f.arrayBuffer(), f.name);
+  });
+}
+$("pprev").addEventListener("click",()=>{ if(pdf&&pageNo>1) showPage(pageNo-1); });
+$("pnext").addEventListener("click",()=>{ if(pdf&&pageNo<numPages) showPage(pageNo+1); });
+$("newpdf").addEventListener("click",()=>{ $("drop").classList.remove("hidden"); });
+</script>
+</body>
+</html>
