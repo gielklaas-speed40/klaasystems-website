@@ -1,6 +1,10 @@
 name: Vergunningen bijwerken
 
 on:
+  push:
+    paths:
+      - "pipeline/**"
+      - ".github/workflows/vergunningen.yml"
   schedule:
     - cron: "10 5 * * *"
   workflow_dispatch:
@@ -37,14 +41,20 @@ jobs:
       - name: Debug
         if: ${{ inputs.debug }}
         run: python pipeline/run.py --debug --since "${{ inputs.since || '3' }}"
+      - name: Droge run na push
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          python pipeline/run.py --debug --since 2 | head -c 12000
+          echo
+          python pipeline/run.py --since 2 --dry-run --debug
       - name: Ophalen en bouwen
-        if: ${{ !inputs.debug }}
+        if: ${{ github.event_name != 'push' && !inputs.debug }}
         run: |
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run --debug"; fi
           python pipeline/run.py --since "${{ inputs.since || '3' }}" $EXTRA
       - name: Committen
-        if: ${{ !inputs.debug && !inputs.dry_run }}
+        if: ${{ github.event_name != 'push' && !inputs.debug && !inputs.dry_run }}
         run: |
           git config user.name "vergunningen-bot"
           git config user.email "vergunningen-bot@users.noreply.github.com"
