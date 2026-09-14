@@ -72,12 +72,16 @@ def pas_tekst_toe(v: dict, tekst: str) -> None:
         v["omschrijving"] = kern
 
 
-def verrijk(vergunningen: list[dict], max_n: int = 800, pauze: float = 0.15, log=print) -> int:
+def verrijk(vergunningen: list[dict], max_n: int = 800, pauze: float = 0.05, log=print, budget_s: float = 720) -> int:
     kandidaten = [v for v in vergunningen if v.get("werksoort") == "overig" and not v.get("verrijkt")
                   and "bouw" in (v.get("activiteit") or "")]
     kandidaten.sort(key=lambda v: v.get("datum", ""), reverse=True)
     n = 0
+    start = time.monotonic()
     for v in kandidaten[:max_n]:
+        if time.monotonic() - start > budget_s:
+            log(f"verrijken gestopt na {budget_s:.0f} s, de rest volgt morgen")
+            break
         url = xml_url_voor(v)
         if not url:
             v["verrijkt"] = True
