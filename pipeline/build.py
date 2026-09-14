@@ -11,7 +11,7 @@ from parse import slugify
 
 WERKSOORT_LABEL = {
     "dakkapel": "Dakkapellen", "dakopbouw": "Dakopbouwen", "dak": "Dakwerk",
-    "zonnepanelen": "Zonnepanelen", "aanbouw": "Aanbouwen en uitbouwen", "bijgebouw": "Bijgebouwen",
+    "zonnepanelen": "Zonnepanelen", "installatie": "Warmtepompen, airco's en laadpalen", "aanbouw": "Aanbouwen en uitbouwen", "bijgebouw": "Bijgebouwen",
     "nieuwbouw": "Nieuwbouw", "gevel": "Gevels en kozijnen", "verbouwing": "Verbouwingen",
     "splitsing": "Splitsing en gebruikswijziging", "bedrijfspand": "Bedrijfspanden", "sloop": "Sloop",
     "terras_en_erf": "Terrassen, erf en inritten", "kappen": "Kapvergunningen", "evenement": "Evenementen",

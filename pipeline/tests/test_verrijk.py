@@ -27,6 +27,10 @@ class VerrijkTests(unittest.TestCase):
         self.assertTrue(v["omschrijving"].startswith("plaatsen van een dakkapel"))
         self.assertTrue(v["verrijkt"])
 
+    def test_kern_stopt_bij_zaakadres(self):
+        t = "GEMEENTEBLAD Aanvraag omgevingsvergunning Bestevaerstraat 199-H 1055TL Amsterdam Omschrijving: vergroten van de kelder en het realiseren van een aanbouw Zaakadres: Bestevaerstraat 199-H Besluit: verleend"
+        self.assertEqual(verrijk.kern_uit_tekst(t), "vergroten van de kelder en het realiseren van een aanbouw")
+
     def test_xml_url(self):
         self.assertEqual(verrijk.xml_url_voor({"id": "gmb-2026-426434"}),
                          "https://repository.overheid.nl/frbr/officielepublicaties/gmb/2026/gmb-2026-426434/1/xml/gmb-2026-426434.xml")

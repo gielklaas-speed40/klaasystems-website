@@ -22,11 +22,11 @@
 <url><loc>https://klaasystems.nl/vergunningen/urk/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/tytsjerksteradiel/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/goes/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/wassenaar/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/alphen-aan-den-rijn/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/heerlen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/aalten/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/de-bilt/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/wassenaar/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/breda/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/krimpenerwaard/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/ermelo/</loc><lastmod>2026-09-14</lastmod></url>
@@ -140,6 +140,7 @@
 <url><loc>https://klaasystems.nl/vergunningen/simpelveld/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/maastricht/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/enkhuizen/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/beuningen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/castricum/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/harlingen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/vlaardingen/</loc><lastmod>2026-09-14</lastmod></url>
@@ -222,6 +223,7 @@
 <url><loc>https://klaasystems.nl/vergunningen/maassluis/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/neder-betuwe/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/pijnacker-nootdorp/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/wijchen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/wijk-bij-duurstede/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/helmond/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/maasgouw/</loc><lastmod>2026-09-14</lastmod></url>
@@ -242,7 +244,6 @@
 <url><loc>https://klaasystems.nl/vergunningen/almelo/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/vaals/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/dongen/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/beuningen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/losser/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/rheden/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/albrandswaard/</loc><lastmod>2026-09-14</lastmod></url>
@@ -313,7 +314,6 @@
 <url><loc>https://klaasystems.nl/vergunningen/loon-op-zand/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/bunnik/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/son-en-breugel/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/wijchen/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/terschelling/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/lingewaard/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/wageningen/</loc><lastmod>2026-09-14</lastmod></url>
@@ -333,16 +333,17 @@
 <url><loc>https://klaasystems.nl/vergunningen/veendam/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/oldenzaal/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/bedrijfspand/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/werk/overig/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/werk/aanbouw/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/terras_en_erf/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/werk/overig/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/dakkapel/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/bijgebouw/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/dakopbouw/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/werk/gevel/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/werk/aanbouw/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/werk/installatie/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/zonnepanelen/</loc><lastmod>2026-09-14</lastmod></url>
-<url><loc>https://klaasystems.nl/vergunningen/werk/splitsing/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/werk/gevel/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/verbouwing/</loc><lastmod>2026-09-14</lastmod></url>
+<url><loc>https://klaasystems.nl/vergunningen/werk/splitsing/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/nieuwbouw/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/sloop/</loc><lastmod>2026-09-14</lastmod></url>
 <url><loc>https://klaasystems.nl/vergunningen/werk/dak/</loc><lastmod>2026-09-14</lastmod></url>

@@ -10,7 +10,8 @@ import fetch
 import parse
 
 KERN_RE = re.compile(
-    r"(?i)(?:voor|betreft|betreffende|activiteit|omschrijving|inhoud|werkzaamheden)\s*:?\s*"
+    r"(?i)(?:omschrijving|betreft|betreffende|werkzaamheden|inhoud)\s*:\s*([^.;\n]{6,140})"
+    r"|(?:voor|betreft|betreffende|activiteit|omschrijving|inhoud|werkzaamheden)\s*:?\s*"
     r"((?:het|een|de)\s+[\w-]+(?:en|eren)\b[^.;\n]{3,140})"
 )
 WERKWOORD_RE = re.compile(r"(?i)\b((?:het\s+)?(?:plaatsen|bouwen|realiseren|vergroten|verbouwen|veranderen|wijzigen|"
@@ -42,12 +43,17 @@ def tekst_uit_xml(xml_bytes: bytes) -> str:
     return re.sub(r"\s+", " ", tekst)[:6000]
 
 
+STOP_RE = re.compile(r"\s*(?:Zaakadres|Zaaknummer|Besluit|Datum|Locatie|Adres|Kenmerk|Verzenddatum|Dossier|Ontvangstdatum|"
+                     r"Rechtsmiddel|Bezwaar|Inzage|Procedure|Status|Activiteit|Aanvrager|Publicatiedatum|Toelichting|Ter inzage)\b\s*:?.*$")
+
+
 def kern_uit_tekst(tekst: str) -> str:
     for rx in (KERN_RE, WERKWOORD_RE):
         m = rx.search(tekst)
         if m:
-            k = re.sub(r"(?i)^(?:het|een|de)\s+", "", m.group(1).strip(" ,:-"))
-            k = re.sub(r"\b[1-9][0-9]{3}\s?[A-Z]{2}\b.*$", "", k).strip(" ,:-")
+            k = re.sub(r"(?i)^(?:het|een|de)\s+", "", (m.group(1) or m.group(2) or "").strip(" ,:-"))
+            k = re.sub(r"\b[1-9][0-9]{3}\s?[A-Z]{2}\b.*$", "", k)
+            k = STOP_RE.sub("", k).strip(" ,:-")
             return k[:140]
     return ""
 

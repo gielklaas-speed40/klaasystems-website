@@ -42,7 +42,7 @@ def main() -> int:
     ap.add_argument("--max", type=int, default=5000)
     ap.add_argument("--vandaag", help="JJJJ-MM-DD, voor reproduceerbare builds")
     ap.add_argument("--rebuild", action="store_true", help="niets ophalen, opslag opnieuw parsen en pagina's bouwen")
-    ap.add_argument("--verrijk", type=int, default=800, help="max. aantal publicaties waarvan de tekst wordt opgehaald (0 = uit)")
+    ap.add_argument("--verrijk", type=int, default=1200, help="max. aantal publicaties waarvan de tekst wordt opgehaald (0 = uit)")
     args = ap.parse_args()
 
     vandaag = dt.date.fromisoformat(args.vandaag) if args.vandaag else dt.date.today()
