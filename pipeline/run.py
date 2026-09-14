@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build  # noqa: E402
 import fetch  # noqa: E402
 import parse  # noqa: E402
+import verrijk  # noqa: E402
 
 BEWAAR_DAGEN = 75
 
@@ -40,6 +41,8 @@ def main() -> int:
     ap.add_argument("--term", default="omgevingsvergunning")
     ap.add_argument("--max", type=int, default=5000)
     ap.add_argument("--vandaag", help="JJJJ-MM-DD, voor reproduceerbare builds")
+    ap.add_argument("--rebuild", action="store_true", help="niets ophalen, opslag opnieuw parsen en pagina's bouwen")
+    ap.add_argument("--verrijk", type=int, default=800, help="max. aantal publicaties waarvan de tekst wordt opgehaald (0 = uit)")
     args = ap.parse_args()
 
     vandaag = dt.date.fromisoformat(args.vandaag) if args.vandaag else dt.date.today()
@@ -49,7 +52,12 @@ def main() -> int:
         print(fetch.eerste_record_ruw(sinds, args.term)[:8000])
         return 0
 
-    if args.fixture:
+    opslag_pad = os.path.join(args.out, "data", "opslag.json")
+    if args.rebuild:
+        ruw = [{k: v.get(k, "") for k in ("id", "titel", "gemeente", "datum", "url", "xml_url", "activiteit", "coord")}
+               for v in laad_opslag(opslag_pad)["vergunningen"].values()]
+        print(f"rebuild: {len(ruw)} records uit opslag")
+    elif args.fixture:
         with open(args.fixture, "rb") as f:
             ruw, totaal, diagnose = fetch.records_uit_xml(f.read())
         print(f"fixture: {len(ruw)} records (server meldt {totaal}) {diagnose}")
@@ -57,19 +65,25 @@ def main() -> int:
         ruw = fetch.haal_op(sinds, args.term, max_records=args.max)
         print(f"opgehaald: {len(ruw)} records sinds {sinds}")
 
-    opslag_pad = os.path.join(args.out, "data", "opslag.json")
     opslag = laad_opslag(opslag_pad)
     nieuw = 0
     for r in ruw:
         v = parse.verwerk(r)
         if not v["id"]:
             continue
-        if v["id"] not in opslag["vergunningen"]:
+        oud = opslag["vergunningen"].get(v["id"])
+        if oud is None:
             nieuw += 1
+        elif oud.get("verrijkt"):
+            v["verrijkt"] = True
+            if oud.get("tekst"):
+                verrijk.pas_tekst_toe(v, oud["tekst"])
         opslag["vergunningen"][v["id"]] = v
     grens = (vandaag - dt.timedelta(days=BEWAAR_DAGEN)).isoformat()
     opslag["vergunningen"] = {k: v for k, v in opslag["vergunningen"].items() if v["datum"] >= grens}
     alle = list(opslag["vergunningen"].values())
+    if args.verrijk and not args.fixture and not args.rebuild:
+        verrijk.verrijk(alle, max_n=args.verrijk)
     werk = {}
     for v in alle:
         werk[v["werksoort"]] = werk.get(v["werksoort"], 0) + 1

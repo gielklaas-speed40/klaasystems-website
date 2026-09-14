@@ -26,7 +26,8 @@ VELDEN = {
     "plaats": ["plaatsnaam", "woonplaats", "plaats"],
     "omschrijving": ["omschrijving", "description"],
     "bekendmakingtype": ["bekendmakingtype"],
-    "url": ["preferredurl", "url"],
+    "url": ["preferredurl"],
+    "xml_url": ["url"],
     "activiteit": ["activiteit"],
     "locatiepunt": ["locatiepunt"],
     "ligt_in_gemeente": ["ligtingemeente"],
@@ -95,6 +96,8 @@ def records_uit_xml(xml_bytes: bytes) -> tuple[list[dict], int, str]:
                         break
             if rec.get("id") and not rec.get("url"):
                 rec["url"] = f"https://zoek.officielebekendmakingen.nl/{rec['id']}.html"
+            if rec.get("xml_url") and not rec["xml_url"].endswith(".xml"):
+                rec.pop("xml_url")
             if rec.get("titel"):
                 rec["_ruw"] = velden
                 records.append(rec)

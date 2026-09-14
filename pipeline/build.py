@@ -24,7 +24,7 @@ VAKGROEP_LABEL = {
 }
 STATUS_LABEL = {
     "verleend": "verleend", "aangevraagd": "aangevraagd", "ontwerp": "ontwerpbesluit", "verlengd": "beslistermijn verlengd",
-    "geweigerd": "geweigerd", "ingetrokken": "ingetrokken", "onbekend": "status onbekend",
+    "geweigerd": "geweigerd", "ingetrokken": "ingetrokken", "melding": "melding", "onbekend": "status onbekend",
 }
 FORMSPREE = "https://formspree.io/f/mwlewqjg"
 
@@ -111,7 +111,8 @@ def rij(v: dict, met_gemeente: bool) -> str:
     tagklasse = "tag" if status == "verleend" else "tag grijs"
     cellen = [
         f'<td class="num">{e(datum_nl(v["datum"]))}</td>',
-        f'<td><a href="{e(v["url"])}" rel="nofollow noopener" target="_blank">{e(v["omschrijving"] or v["titel"])}</a></td>',
+        f'<td><a href="{e(v["url"])}" rel="nofollow noopener" target="_blank">{e(v["omschrijving"] or ("omgevingsvergunning" if v["werksoort"] == "overig" else WERKSOORT_LABEL.get(v["werksoort"], "").lower()))}</a>'
+        f'{"" if v["omschrijving"] else "<div class=klein>" + e(v["titel"][:120]) + "</div>"}</td>',
         f'<td>{e(adres)}<div class="klein">{e(plaats)}</div></td>',
     ]
     if met_gemeente:
@@ -174,7 +175,7 @@ def bouw_site(vergunningen: list[dict], uit: str, vandaag: dt.date, dagen_lijst:
     )
     n_verleend30 = sum(1 for v in bouw if v["datum"] >= grens30 and v["status"] == "verleend")
     body = f"""<h1>Verleende bouwvergunningen per gemeente</h1>
-<p class="lead">Elke dag halen we de omgevingsvergunningen uit de gemeentebladen en sorteren we ze op werksoort. Zo zie je in welke straat binnenkort een dakkapel, aanbouw of nieuwbouw komt, voordat de offertes worden aangevraagd.</p>
+<p class="lead">Elke dag halen we de omgevingsvergunningen uit de gemeentebladen en sorteren we ze op werksoort. Zo zie je in welke straat binnenkort een dakkapel, aanbouw of nieuwbouw komt. Een aanvraag is het vroegste openbare signaal, vaak maanden voordat de schilder, stukadoor of installateur wordt gekozen.</p>
 <p class="klein">Laatste 30 dagen: {n_verleend30} verleende bouwvergunningen in {len(tel30)} gemeenten. Bijgewerkt op {e(datum_nl(vandaag.isoformat()))}.</p>
 <h2>Per werksoort</h2>
 <div class="tbl"><table><tr><th>Werksoort</th><th>Laatste 30 dagen</th><th>Interessant voor</th></tr>{werk_rijen}</table></div>
@@ -193,9 +194,16 @@ def bouw_site(vergunningen: list[dict], uit: str, vandaag: dt.date, dagen_lijst:
         os.makedirs(os.path.join(uit, slug), exist_ok=True)
         soorten = Counter(v["werksoort"] for v in items if v["datum"] >= grens30)
         samenvatting = ", ".join(f"{WERKSOORT_LABEL.get(w, w).lower()} {n}" for w, n in soorten.most_common(5))
+        verleend = [v for v in items if v["status"] == "verleend"]
+        rest = [v for v in items if v["status"] != "verleend"]
         body = f"""<h1>Bouwvergunningen in {e(g)}</h1>
 <p class="lead">Omgevingsvergunningen voor bouwwerk die de gemeente {e(g)} de afgelopen {dagen_lijst} dagen heeft gepubliceerd. Laatste 30 dagen: {samenvatting or 'geen bouwvergunningen'}.</p>
-{tabel(items, False)}
+<h2>Verleend</h2>
+<p class="klein">De vergunning is rond, het werk kan beginnen. Meestal is de hoofdaannemer al gekozen, het afbouwwerk en de leveringen vaak nog niet.</p>
+{tabel(verleend, False)}
+<h2>Aangevraagd en overige berichten</h2>
+<p class="klein">Aanvragen lopen acht weken of langer voor op het besluit. Dit is het vroegste openbare signaal dat er gebouwd gaat worden.</p>
+{tabel(rest, False)}
 {mailformulier(f"gemeente:{g}")}"""
         with open(os.path.join(uit, slug, "index.html"), "w", encoding="utf-8") as f:
             f.write(pagina(f"Bouwvergunningen {g}, verleende omgevingsvergunningen", body, 1,

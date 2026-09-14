@@ -11,15 +11,22 @@ import unicodedata
 POSTCODE_RE = re.compile(r"\b([1-9][0-9]{3})\s?([A-Z]{2})\b")
 # Straat + huisnummer: "Dorpsstraat 12", "Van der Heijdenlaan 3a", "1e Kruisweg 4-6"
 STRAAT_RE = re.compile(
-    r"\b((?:[A-Z][\w'.-]*|\d+e)(?:\s(?:[a-z]{1,4}|[A-Z][\w'.-]*)){0,5}?)\s(\d{1,5}(?:\s?[a-zA-Z]|-\d{1,5}| ?[A-Z]?\d*)?)\b(?=[\s,]|$)"
+    r"\b((?:[A-Z][\w'.-]*|\d+e)(?:\s(?:[a-z]{1,4}|[A-Z][\w'.-]*)){0,5}?)\s(\d{1,4}(?:\s?[a-zA-Z](?![a-zA-Z])|-\d{1,4}|-[A-Z](?![a-zA-Z]))?)(?![\d])\b(?=[\s,.;:]|$)"
 )
+GEEN_STRAAT = {
+    "gemeente", "besluit", "omgevingsvergunning", "aanvraag", "verleend", "week", "zaaknummer", "nummer", "zaak",
+    "verzoeklocatie", "locatie", "dossiernummer", "kenmerk", "kavel", "nr", "ong", "kennisgeving", "toestemming",
+    "vergunning", "termijnverlenging", "verlenging", "op", "sectie", "perceel", "van", "de", "het", "een", "wet",
+    "omgevingswet", "procedure", "regulier", "reguliere", "beschikking", "melding", "publicatie", "ontvangen",
+}
 
 STATUSSEN = [
     ("geweigerd", ["geweigerd", "weigering", "weigeren"]),
     ("ingetrokken", ["ingetrokken", "intrekking", "buiten behandeling"]),
     ("verlengd", ["verlengen", "verlenging", "beslistermijn"]),
-    ("verleend", ["verleend", "verleende", "verlening", "besluit omgevingsvergunning", "toegekend"]),
     ("ontwerp", ["ontwerp", "voornemen", "ter inzage"]),
+    ("melding", ["melding"]),
+    ("verleend", ["verleend", "verleende", "verlening", "toegekend", "toestemming", "besluit", "beschikking", "vergunningsvrij"]),
     ("aangevraagd", ["aangevraagd", "aanvraag", "ontvangen", "ingediend", "kennisgeving"]),
 ]
 
@@ -85,9 +92,11 @@ def vind_adres(tekst: str) -> dict:
     kandidaten = [m for m in STRAAT_RE.finditer(zoekruimte)]
     for m in reversed(kandidaten):
         straat = m.group(1).strip()
-        if straat.lower() in {"gemeente", "besluit", "omgevingsvergunning", "aanvraag", "verleend", "week", "zaaknummer", "nummer", "zaak"}:
+        if straat.lower() in GEEN_STRAAT or straat.split()[-1].lower() in {"nr", "nummer", "zaaknummer", "kavel", "sectie", "week"}:
             continue
         if re.fullmatch(r"\d{4}", m.group(2)) and not pc:
+            continue
+        if re.search(r"\d{4}", straat):
             continue
         if straat[0].isdigit() and not re.match(r"\d+e\s", straat):
             continue
@@ -97,15 +106,52 @@ def vind_adres(tekst: str) -> dict:
     return adres
 
 
-def omschrijving_uit_titel(titel: str) -> str:
+RUIS_RE = re.compile(
+    r"(?i)\b(verleende|verleend|aangevraagde|aanvraag|aanvragen|ontvangen|ontvangst|ingekomen|ingediende|ingediend|besluit op|besluit|"
+    r"kennisgeving|ontwerp|ontwerpbesluit|verzoek om|verzoek|publicatie|gedeeltelijk|project|binnengekomen|geweigerde|geweigerd|ingetrokken|toestemming|termijnverlenging|"
+    r"verlengen beslistermijn|verlenging beslistermijn|verlenging van de beslistermijn|beslistermijn|verlenging|verlengd|"
+    r"reguliere procedure|uitgebreide procedure|regulier|reguliere|procedure|omgevingswet|omgevingsplan|"
+    r"omgevingsvergunning(?:en)?|vergunning|activiteit|voor de activiteit|op de locatie|op het adres|op locatie|"
+    r"aan het adres|het adres|de locatie|betreffende|betreft|inzake|m\.b\.t\.|"
+    r"hebben wij|wij)\b"
+)
+STAART_RE = re.compile(r"(?i)(?:\s*\b(?:aan|op|te|in|bij|nabij|van|voor|de|het|een|ter hoogte van|thv|ong\.?|en|met|naar|tussen)\b[\s,.:;-]*)+$")
+
+
+def omschrijving_uit_titel(titel: str, adres: dict | None = None) -> str:
     """Het deel van de titel dat het werk beschrijft, zonder gemeente, status en adres."""
     t = titel
-    t = re.sub(r"^(gemeente\s+)?[A-Z][\w' .-]*?\s[-:|]\s", "", t)  # "Gemeente X - " voorvoegsel
-    t = re.sub(r"(?i)\b(verleende|verleend|aangevraagde|aanvraag|ontvangen|besluit|kennisgeving|ontwerp|geweigerde|ingetrokken|verlengen beslistermijn|verlenging beslistermijn|reguliere procedure|uitgebreide procedure)\b", "", t)
-    t = re.sub(r"(?i)\bomgevingsvergunning(en)?\b", "", t)
+    if adres and adres.get("straat"):
+        straat = adres["straat"]
+        if straat in t:
+            voor, na = t.split(straat, 1)
+            na = re.sub(r"^\s*" + re.escape(adres.get("huisnummer", "")) + r"\b", "", na) if adres.get("huisnummer") else na
+            na = re.sub(r"\b[1-9][0-9]{3}\s?[A-Z]{2}\b", "", na)
+            if adres.get("plaats"):
+                na = na.replace(adres["plaats"], "")
+            na = re.sub(r"^[\s,.:;|-]*(?:te|in|aan)\b", "", na)
+            t = voor + " | " + na
+    t = re.sub(r"^(?:gemeente\s+)?[A-Z][\w'-]*(?:\s[A-Z][\w'-]*){0,3}\s*[-:|\u2013]\s", "", t)  # "Gemeente X - " voorvoegsel
+    t = re.sub(r"(?i)^gemeente\s+[A-Z][\w'-]*(?:\s[A-Z][\w'-]*)?\s*[-:|,\u2013]?\s*", "", t)
+    t = re.sub(r"\s*[-\u2013]\s*[-\u2013]\s*", " ", t)
+    t = re.sub(r"(?i)\b(zaaknummer|zaaknr\.?|dossiernummer|kenmerk|ons kenmerk)\s*:?\s*[\w./-]+", "", t)
+    t = re.sub(r"\b[A-Z]{1,3}\d{2,4}[-.][\w-]+\b", "", t)  # Z2026-00000352, Z26AB.0813
+    t = re.sub(r"\b\d{1,2}-\d{1,2}-\d{4}\b", "", t)
     t = re.sub(r"\b[1-9][0-9]{3}\s?[A-Z]{2}\b.*$", "", t)
-    t = re.sub(r"\s+", " ", t).strip(" ,:-|.")
-    return t
+    # Werkwoordelijke kern behouden: knip alles voor "het/een <werkwoord>en van" weg als dat er is.
+    m = re.search(r"(?i)\b(?:het|voor het|voor een)\s+(\w+en\s+(?:van|voor)\b.*)$", t)
+    if m:
+        t = m.group(1)
+    t = RUIS_RE.sub(" ", t)
+    delen = []
+    for deel in t.split("|"):
+        deel = re.sub(r"\s+", " ", deel).strip(" ,:-.;")
+        deel = STAART_RE.sub("", deel)
+        deel = re.sub(r"^(?:[\s,.:;-]*\b(?:voor|van|het|een|de|op|aan)\b)+\s*", "", deel, flags=re.I)
+        deel = re.sub(r"\s+", " ", deel).strip(" ,:-.;")
+        if len(deel) >= 6 and not re.fullmatch(r"(?i)[\W\d]*", deel):
+            delen.append(deel)
+    return delen[0] if delen else ""
 
 
 def verwerk(record: dict) -> dict:
@@ -120,18 +166,18 @@ def verwerk(record: dict) -> dict:
     for veld in ("straat", "huisnummer", "postcode", "plaats"):
         if record.get(veld):
             adres[veld] = str(record[veld]).strip()
+    pcm = POSTCODE_RE.search(adres["postcode"].upper().replace(" ", "")[:4] + " " + adres["postcode"].upper().replace(" ", "")[4:]) if adres["postcode"] else None
+    adres["postcode"] = f"{pcm.group(1)} {pcm.group(2)}" if pcm else ""
     if not adres["plaats"] and gemeente:
         adres["plaats"] = gemeente
-    omschrijving = record.get("omschrijving") or omschrijving_uit_titel(titel)
-    if adres["straat"] and adres["straat"] in omschrijving:
-        omschrijving = omschrijving.split(adres["straat"], 1)[0].strip(" ,:-|.")
+    omschrijving = record.get("omschrijving") or omschrijving_uit_titel(titel, adres)
     omschrijving = re.sub(r"(?i)^(voor|van|betreft|t\.b\.v\.|tbv)\s+", "", omschrijving).strip(" ,:-|.")
     werksoort, vakgroepen = bepaal_werksoort(titel, record.get("omschrijving", ""))
     activiteit = (record.get("activiteit") or "").strip().lower()
     is_bouw = werksoort in BOUW_WERKSOORTEN or (werksoort == "overig" and "bouw" in activiteit)
     if werksoort == "overig" and "bouw" in activiteit:
         vakgroepen = ["aannemer"]
-    coord = ""
+    coord = record.get("coord") or ""
     m = re.match(r"\s*(-?\d+\.\d+)[ ,]+(-?\d+\.\d+)", record.get("locatiepunt") or "")
     if m:
         coord = f"{float(m.group(1)):.5f},{float(m.group(2)):.5f}"
@@ -150,4 +196,5 @@ def verwerk(record: dict) -> dict:
         "coord": coord,
         "adres": adres,
         "url": record.get("url", ""),
+        "xml_url": record.get("xml_url", ""),
     }

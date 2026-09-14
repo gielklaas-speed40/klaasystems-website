@@ -17,6 +17,32 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(parse.bepaal_status("Verlengen beslistermijn omgevingsvergunning"), "verlengd")
         self.assertEqual(parse.bepaal_status("Geweigerde omgevingsvergunning"), "geweigerd")
 
+    def test_status_toestemming_en_voornemen(self):
+        self.assertEqual(parse.bepaal_status("Toestemming voor het plaatsen van een woonwagen, Molenheg 31"), "verleend")
+        self.assertEqual(parse.bepaal_status("Voornemen om een vergunning te verlenen voor het aanpassen"), "ontwerp")
+        self.assertEqual(parse.bepaal_status("Kennisgeving besluit op aanvraag omgevingsvergunning Kerkvaart"), "verleend")
+
+    def test_geen_valse_straat(self):
+        a = parse.vind_adres("Toestemming voor het bouwen van een woning aan Lobelia ong, kavel 59 De Moer, Verzoeklocatie 2026063002080")
+        self.assertNotEqual(a["straat"], "Verzoeklocatie")
+        self.assertNotIn("2026063002080", a["huisnummer"])
+
+    def test_omschrijving_schoon(self):
+        self.assertEqual(parse.omschrijving_uit_titel("Ingediende aanvraag omgevingsvergunning: plaatsen van 2 airco units, Remuslaan 2 5631JP Eindhoven"), "plaatsen van 2 airco units, Remuslaan 2")
+        self.assertEqual(parse.omschrijving_uit_titel("Kennisgeving verlenging beslistermijn"), "")
+        self.assertEqual(parse.omschrijving_uit_titel("Kennisgeving termijnverlenging Z2026-00000352, Kruinweg 1b-105, 6369TZ Simpelveld"), "Kruinweg 1b-105")
+
+    def test_postcode_zonder_spatie(self):
+        v = parse.verwerk({"id": "y", "titel": "Aanvraag, plaatsen overkapping, Industrieweg 6, 4153BW Beesd", "gemeente": "West Betuwe"})
+        self.assertEqual(v["adres"]["postcode"], "4153 BW")
+        self.assertEqual(v["omschrijving"], "plaatsen overkapping")
+
+    def test_omschrijving_na_adres(self):
+        v = parse.verwerk({"id": "z", "titel": "Verleend, reguliere procedure, Wethouder Rebellaan 104 Barneveld, het verbouwen en uitbreiden van de woning", "gemeente": "Barneveld"})
+        self.assertEqual(v["adres"]["straat"], "Wethouder Rebellaan")
+        self.assertEqual(v["omschrijving"], "verbouwen en uitbreiden van de woning")
+        self.assertEqual(v["status"], "verleend")
+
     def test_werksoort(self):
         self.assertEqual(parse.bepaal_werksoort("plaatsen van een dakkapel")[0], "dakkapel")
         self.assertEqual(parse.bepaal_werksoort("kappen van een boom")[0], "kappen")
