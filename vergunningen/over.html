@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Over de data van Vergunningenradar</title>
+<meta name="description" content="Waar de vergunningen op Vergunningenradar vandaan komen, hoe vaak ze worden bijgewerkt en hoe we met adressen omgaan.">
+<link rel="canonical" href="https://klaasystems.nl/vergunningen/over.html">
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#15202b;--mut:#61707f;--line:#dde3ea;--acc:#0f6b5c}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--acc)}
+header{background:var(--panel);border-bottom:1px solid var(--line)}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header .wrap{display:flex;justify-content:space-between;align-items:baseline;padding-top:14px;padding-bottom:12px;gap:16px;flex-wrap:wrap}
+header .brand{font-weight:700;font-size:17px;text-decoration:none;color:var(--ink)}
+header .brand span{color:var(--acc)}
+header nav a{margin-left:16px;font-size:14px}
+main{padding:28px 0 48px}
+h1{font-size:26px;margin:0 0 14px;line-height:1.2}
+h2{font-size:18px;margin:28px 0 8px}
+footer{border-top:1px solid var(--line);padding:18px 0;color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="./">Vergunningen<span>radar</span></a>
+<nav><a href="./">Gemeenten</a><a href="werk/">Werksoorten</a><a href="https://klaasystems.nl/">Klaasystems</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>Over de data</h1>
+<p>Gemeenten zijn verplicht elke omgevingsvergunning bekend te maken in het Gemeenteblad. Die bekendmakingen staan als open data op officielebekendmakingen.nl. Vergunningenradar haalt ze daar elke ochtend op, leest het adres en het soort werk uit de titel en zet ze per gemeente en per werksoort op een rij.</p>
+
+<h2>Wat je hier ziet</h2>
+<p>Alleen bekendmakingen waarin het woord omgevingsvergunning voorkomt, uit de afgelopen 60 dagen. De werksoort (dakkapel, aanbouw, nieuwbouw, gevel en kozijnen, zonnepanelen) volgt uit de omschrijving die de gemeente zelf schrijft. Kapvergunningen en evenementen halen we eruit. Klopt een indeling niet, dan staat de oorspronkelijke bekendmaking altijd een klik verderop.</p>
+
+<h2>Wat je hier niet ziet</h2>
+<p>Namen van aanvragers. Gemeenten zetten die zelf niet in de bekendmaking, en wij voegen niets toe. Het adres is het adres van het bouwwerk, zoals de gemeente dat publiceert. We koppelen er geen bewonersgegevens, telefoonnummers of andere bronnen aan.</p>
+
+<h2>Waarom dit bestaat</h2>
+<p>Een verleende vergunning voor een dakkapel betekent dat er de komende maanden een dakdekker, een timmerman en vaak een schilder nodig is. Bedrijven in de bouw zoeken dat nu handmatig op in het Gemeenteblad, of ze missen het. Deze site en de wekelijkse mail per vak en regio nemen dat zoekwerk over.</p>
+
+<h2>Bijgewerkt</h2>
+<p>Dagelijks rond 7:00 uur. Een bekendmaking van vandaag staat er meestal de volgende ochtend op. Staat een gemeente er niet bij, dan heeft die gemeente in de afgelopen 60 dagen geen bekendmaking met bouwwerk gepubliceerd, of publiceert ze onder een andere titel. Mail dan naar <a href="mailto:info@klaasystems.nl">info@klaasystems.nl</a>, dan kijken we ernaar.</p>
+
+<h2>Hergebruik</h2>
+<p>De onderliggende gegevens per gemeente staan als JSON in de map <code>data/</code>. Hergebruik voor eigen gebruik is prima met bronvermelding. Wil je de gegevens in je eigen CRM of offertepakket, neem dan contact op via <a href="https://klaasystems.nl/">klaasystems.nl</a>.</p>
+</div></main>
+<footer><div class="wrap">Bron: gemeentebladen via officielebekendmakingen.nl. Een dienst van <a href="https://klaasystems.nl/">Klaasystems</a>.</div></footer>
+</body>
+</html>

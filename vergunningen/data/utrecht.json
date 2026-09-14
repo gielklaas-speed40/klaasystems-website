@@ -1,0 +1,26 @@
+[
+{
+"id": "gmb-2026-400004",
+"titel": "Gemeente Utrecht - besluit omgevingsvergunning - nieuwbouw van 12 woningen, Kanaalweg 100 t/m 122, 3526 KL Utrecht",
+"omschrijving": "nieuwbouw van 12 woningen",
+"gemeente": "Utrecht",
+"gemeente_slug": "utrecht",
+"datum": "2026-09-09",
+"status": "verleend",
+"werksoort": "nieuwbouw",
+"vakgroepen": [
+"aannemer",
+"installateur",
+"schilder",
+"stukadoor"
+],
+"is_bouw": true,
+"adres": {
+"straat": "Kanaalweg",
+"huisnummer": "100",
+"postcode": "3526 KL",
+"plaats": "Utrecht"
+},
+"url": "https://zoek.officielebekendmakingen.nl/gmb-2026-400004.html"
+}
+]

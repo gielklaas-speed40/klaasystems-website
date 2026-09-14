@@ -1,0 +1,23 @@
+[
+{
+"id": "gmb-2026-400006",
+"titel": "Verleende omgevingsvergunning voor het plaatsen van zonnepanelen op het dak, Molenstraat 45, 9712 AB Groningen",
+"omschrijving": "het plaatsen van zonnepanelen op het dak",
+"gemeente": "Groningen",
+"gemeente_slug": "groningen",
+"datum": "2026-09-08",
+"status": "verleend",
+"werksoort": "zonnepanelen",
+"vakgroepen": [
+"installateur"
+],
+"is_bouw": true,
+"adres": {
+"straat": "Molenstraat",
+"huisnummer": "45",
+"postcode": "9712 AB",
+"plaats": "Groningen"
+},
+"url": "https://zoek.officielebekendmakingen.nl/gmb-2026-400006.html"
+}
+]

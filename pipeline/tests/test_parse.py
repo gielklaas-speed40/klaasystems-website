@@ -1,0 +1,63 @@
+import os
+import sys
+import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import fetch  # noqa: E402
+import parse  # noqa: E402
+
+FIXTURE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fixtures", "sru_sample.xml")
+
+
+class ParseTests(unittest.TestCase):
+    def test_status(self):
+        self.assertEqual(parse.bepaal_status("Verleende omgevingsvergunning dakkapel"), "verleend")
+        self.assertEqual(parse.bepaal_status("Aanvraag omgevingsvergunning, bouwen"), "aangevraagd")
+        self.assertEqual(parse.bepaal_status("Verlengen beslistermijn omgevingsvergunning"), "verlengd")
+        self.assertEqual(parse.bepaal_status("Geweigerde omgevingsvergunning"), "geweigerd")
+
+    def test_werksoort(self):
+        self.assertEqual(parse.bepaal_werksoort("plaatsen van een dakkapel")[0], "dakkapel")
+        self.assertEqual(parse.bepaal_werksoort("kappen van een boom")[0], "kappen")
+        self.assertEqual(parse.bepaal_werksoort("het bouwen van een woning")[0], "nieuwbouw")
+        self.assertEqual(parse.bepaal_werksoort("vervangen kozijnen voorgevel")[0], "gevel")
+        self.assertEqual(parse.bepaal_werksoort("iets onduidelijks")[0], "overig")
+
+    def test_adres_met_postcode(self):
+        a = parse.vind_adres("dakkapel, Dorpsstraat 12, 5611 AB Eindhoven")
+        self.assertEqual(a, {"straat": "Dorpsstraat", "huisnummer": "12", "postcode": "5611 AB", "plaats": "Eindhoven"})
+
+    def test_adres_zonder_postcode(self):
+        a = parse.vind_adres("aanbouw, Van der Heijdenlaan 3a te Tilburg")
+        self.assertEqual(a["straat"], "Van der Heijdenlaan")
+        self.assertEqual(a["huisnummer"], "3a")
+
+    def test_adres_plaats_met_lidwoord(self):
+        a = parse.vind_adres("Kerkstraat 7, 5251 AB Vlijmen")
+        self.assertEqual(a["plaats"], "Vlijmen")
+        a = parse.vind_adres("Markt 1, 5211 JX 's-Hertogenbosch")
+        self.assertEqual(a["postcode"], "5211 JX")
+
+    def test_verwerk_uit_fixture(self):
+        with open(FIXTURE, "rb") as f:
+            records, totaal, diagnose = fetch.records_uit_xml(f.read())
+        self.assertEqual(totaal, 6)
+        self.assertEqual(diagnose, "")
+        verwerkt = [parse.verwerk(r) for r in records]
+        ids = {v["id"] for v in verwerkt}
+        self.assertIn("gmb-2026-400001", ids)
+        eerste = next(v for v in verwerkt if v["id"] == "gmb-2026-400001")
+        self.assertEqual(eerste["gemeente"], "Eindhoven")
+        self.assertEqual(eerste["werksoort"], "dakkapel")
+        self.assertEqual(eerste["status"], "verleend")
+        self.assertTrue(eerste["url"].endswith("gmb-2026-400001.html"))
+        self.assertNotIn("Dorpsstraat", eerste["omschrijving"])
+        groningen = next(v for v in verwerkt if v["id"] == "gmb-2026-400006")
+        self.assertEqual(groningen["gemeente"], "Groningen")
+        kap = next(v for v in verwerkt if v["id"] == "gmb-2026-400003")
+        self.assertFalse(kap["is_bouw"])
+
+
+if __name__ == "__main__":
+    unittest.main()

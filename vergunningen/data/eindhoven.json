@@ -1,0 +1,47 @@
+[
+{
+"id": "gmb-2026-400001",
+"titel": "Gemeente Eindhoven - verleende omgevingsvergunning voor het plaatsen van een dakkapel, Dorpsstraat 12, 5611 AB Eindhoven",
+"omschrijving": "het plaatsen van een dakkapel",
+"gemeente": "Eindhoven",
+"gemeente_slug": "eindhoven",
+"datum": "2026-09-11",
+"status": "verleend",
+"werksoort": "dakkapel",
+"vakgroepen": [
+"dakdekker",
+"timmerman",
+"kozijnen"
+],
+"is_bouw": true,
+"adres": {
+"straat": "Dorpsstraat",
+"huisnummer": "12",
+"postcode": "5611 AB",
+"plaats": "Eindhoven"
+},
+"url": "https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html"
+},
+{
+"id": "gmb-2026-400005",
+"titel": "Verlengen beslistermijn omgevingsvergunning, vervangen van kozijnen in de voorgevel, 1e Kruisweg 4, 5611 CD Eindhoven",
+"omschrijving": "vervangen van kozijnen in de voorgevel",
+"gemeente": "Eindhoven",
+"gemeente_slug": "eindhoven",
+"datum": "2026-09-08",
+"status": "verlengd",
+"werksoort": "gevel",
+"vakgroepen": [
+"kozijnen",
+"schilder"
+],
+"is_bouw": true,
+"adres": {
+"straat": "1e Kruisweg",
+"huisnummer": "4",
+"postcode": "5611 CD",
+"plaats": "Eindhoven"
+},
+"url": "https://zoek.officielebekendmakingen.nl/gmb-2026-400005.html"
+}
+]

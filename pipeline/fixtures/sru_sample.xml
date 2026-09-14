@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sru:searchRetrieveResponse xmlns:sru="http://docs.oasis-open.org/ns/search-ws/sruResponse"
+  xmlns:gzd="http://standaarden.overheid.nl/sru" xmlns:dcterms="http://purl.org/dc/terms/"
+  xmlns:overheidop="http://standaarden.overheid.nl/op/terms/" xmlns:overheidbm="http://standaarden.overheid.nl/bm/terms/">
+  <sru:version>2.0</sru:version>
+  <sru:numberOfRecords>6</sru:numberOfRecords>
+  <sru:records>
+    <sru:record>
+      <sru:recordSchema>gzd</sru:recordSchema>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta>
+        <owmskern>
+          <dcterms:identifier>gmb-2026-400001</dcterms:identifier>
+          <dcterms:title>Gemeente Eindhoven - verleende omgevingsvergunning voor het plaatsen van een dakkapel, Dorpsstraat 12, 5611 AB Eindhoven</dcterms:title>
+          <dcterms:type>Gemeenteblad</dcterms:type>
+          <dcterms:creator>Eindhoven</dcterms:creator>
+          <dcterms:available>2026-09-11</dcterms:available>
+        </owmskern>
+        <tpmeta><overheidbm:bekendmakingType>omgevingsvergunning</overheidbm:bekendmakingType></tpmeta>
+      </meta></gzd:originalData>
+      <gzd:enrichedData><gzd:itemUrl manifestation="html">https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html</gzd:itemUrl></gzd:enrichedData>
+      </gzd:gzd></sru:recordData>
+    </sru:record>
+    <sru:record>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta><owmskern>
+          <dcterms:identifier>gmb-2026-400002</dcterms:identifier>
+          <dcterms:title>Verleende omgevingsvergunning, het bouwen van een aanbouw aan de achterzijde van de woning, Van der Heijdenlaan 3a te Tilburg</dcterms:title>
+          <dcterms:creator>Tilburg</dcterms:creator>
+          <dcterms:available>2026-09-10</dcterms:available>
+      </owmskern></meta></gzd:originalData></gzd:gzd></sru:recordData>
+    </sru:record>
+    <sru:record>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta><owmskern>
+          <dcterms:identifier>gmb-2026-400003</dcterms:identifier>
+          <dcterms:title>Aanvraag omgevingsvergunning, kappen van 3 bomen, Parklaan 8, 5021 XZ Tilburg</dcterms:title>
+          <dcterms:creator>Tilburg</dcterms:creator>
+          <dcterms:available>2026-09-10</dcterms:available>
+      </owmskern></meta></gzd:originalData></gzd:gzd></sru:recordData>
+    </sru:record>
+    <sru:record>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta><owmskern>
+          <dcterms:identifier>gmb-2026-400004</dcterms:identifier>
+          <dcterms:title>Gemeente Utrecht - besluit omgevingsvergunning - nieuwbouw van 12 woningen, Kanaalweg 100 t/m 122, 3526 KL Utrecht</dcterms:title>
+          <dcterms:creator>Utrecht</dcterms:creator>
+          <dcterms:available>2026-09-09</dcterms:available>
+      </owmskern></meta></gzd:originalData></gzd:gzd></sru:recordData>
+    </sru:record>
+    <sru:record>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta><owmskern>
+          <dcterms:identifier>gmb-2026-400005</dcterms:identifier>
+          <dcterms:title>Verlengen beslistermijn omgevingsvergunning, vervangen van kozijnen in de voorgevel, 1e Kruisweg 4, 5611 CD Eindhoven</dcterms:title>
+          <dcterms:creator>Eindhoven</dcterms:creator>
+          <dcterms:available>2026-09-08</dcterms:available>
+      </owmskern></meta></gzd:originalData></gzd:gzd></sru:recordData>
+    </sru:record>
+    <sru:record>
+      <sru:recordData><gzd:gzd><gzd:originalData><meta><owmskern>
+          <dcterms:identifier>gmb-2026-400006</dcterms:identifier>
+          <dcterms:title>Verleende omgevingsvergunning voor het plaatsen van zonnepanelen op het dak, Molenstraat 45, 9712 AB Groningen</dcterms:title>
+          <dcterms:creator>Gemeente Groningen</dcterms:creator>
+          <dcterms:available>2026-09-08</dcterms:available>
+      </owmskern></meta></gzd:originalData></gzd:gzd></sru:recordData>
+    </sru:record>
+  </sru:records>
+</sru:searchRetrieveResponse>
