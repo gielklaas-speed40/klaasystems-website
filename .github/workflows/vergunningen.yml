@@ -44,7 +44,7 @@ jobs:
       - name: Droge run na push
         if: ${{ github.event_name == 'push' }}
         run: |
-          python pipeline/run.py --debug --since 2 | head -c 12000
+          python pipeline/probe.py
           echo
           python pipeline/run.py --since 2 --dry-run --debug
       - name: Ophalen en bouwen
