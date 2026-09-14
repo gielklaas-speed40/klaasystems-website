@@ -127,6 +127,14 @@ def verwerk(record: dict) -> dict:
         omschrijving = omschrijving.split(adres["straat"], 1)[0].strip(" ,:-|.")
     omschrijving = re.sub(r"(?i)^(voor|van|betreft|t\.b\.v\.|tbv)\s+", "", omschrijving).strip(" ,:-|.")
     werksoort, vakgroepen = bepaal_werksoort(titel, record.get("omschrijving", ""))
+    activiteit = (record.get("activiteit") or "").strip().lower()
+    is_bouw = werksoort in BOUW_WERKSOORTEN or (werksoort == "overig" and "bouw" in activiteit)
+    if werksoort == "overig" and "bouw" in activiteit:
+        vakgroepen = ["aannemer"]
+    coord = ""
+    m = re.match(r"\s*(-?\d+\.\d+)[ ,]+(-?\d+\.\d+)", record.get("locatiepunt") or "")
+    if m:
+        coord = f"{float(m.group(1)):.5f},{float(m.group(2)):.5f}"
     return {
         "id": record.get("id", ""),
         "titel": titel,
@@ -137,7 +145,9 @@ def verwerk(record: dict) -> dict:
         "status": record.get("status") or bepaal_status(titel),
         "werksoort": werksoort,
         "vakgroepen": vakgroepen,
-        "is_bouw": werksoort in BOUW_WERKSOORTEN,
+        "is_bouw": is_bouw,
+        "activiteit": activiteit,
+        "coord": coord,
         "adres": adres,
         "url": record.get("url", ""),
     }

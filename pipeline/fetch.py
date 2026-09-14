@@ -26,15 +26,24 @@ VELDEN = {
     "plaats": ["plaatsnaam", "woonplaats", "plaats"],
     "omschrijving": ["omschrijving", "description"],
     "bekendmakingtype": ["bekendmakingtype"],
-    "url": ["url", "preferredurl"],
+    "url": ["preferredurl", "url"],
+    "activiteit": ["activiteit"],
+    "locatiepunt": ["locatiepunt"],
+    "ligt_in_gemeente": ["ligtingemeente"],
 }
 
 
+def bouw_queries(sinds: str, term: str = "omgevingsvergunning") -> list[str]:
+    """Eerste query op rubriek (dt.type), tweede op titel als de rubriek niets oplevert."""
+    basis = f'c.product-area==officielepublicaties AND w.publicatienaam=="Gemeenteblad" AND dt.modified>="{sinds}"'
+    return [
+        f'{basis} AND dt.type=="{term}"',
+        f'{basis} AND dt.title any "{term}"',
+    ]
+
+
 def bouw_query(sinds: str, term: str = "omgevingsvergunning") -> str:
-    return (
-        f'(c.product-area==officielepublicaties AND dt.type=="Gemeenteblad" '
-        f'AND dt.modified>="{sinds}" AND dt.title any "{term}")'
-    )
+    return bouw_queries(sinds, term)[0]
 
 
 def _get(url: str, timeout: int = 60) -> bytes:
@@ -95,7 +104,15 @@ def records_uit_xml(xml_bytes: bytes) -> tuple[list[dict], int, str]:
 def haal_op(sinds: str, term: str = "omgevingsvergunning", per_pagina: int = 200,
             max_records: int = 5000, pauze: float = 0.3, log=print) -> list[dict]:
     """Alle records sinds datum (JJJJ-MM-DD) ophalen, gepagineerd."""
-    query = bouw_query(sinds, term)
+    alle: list[dict] = []
+    for query in bouw_queries(sinds, term):
+        alle = _haal_query(query, per_pagina, max_records, pauze, log)
+        if alle:
+            break
+    return alle
+
+
+def _haal_query(query: str, per_pagina: int, max_records: int, pauze: float, log) -> list[dict]:
     alle: list[dict] = []
     start = 1
     while start <= max_records:

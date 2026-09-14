@@ -201,7 +201,7 @@ def bouw_site(vergunningen: list[dict], uit: str, vandaag: dt.date, dagen_lijst:
             f.write(pagina(f"Bouwvergunningen {g}, verleende omgevingsvergunningen", body, 1,
                            f"Verleende omgevingsvergunningen in {g}: dakkapellen, aanbouwen, nieuwbouw en verbouwingen met adres en datum.", f"{slug}/"))
         with open(os.path.join(uit, "data", f"{slug}.json"), "w", encoding="utf-8") as f:
-            json.dump(items, f, ensure_ascii=False, indent=0)
+            json.dump(items, f, ensure_ascii=False, separators=(",", ":"))
 
     # Per werksoort
     werk_index = "".join(

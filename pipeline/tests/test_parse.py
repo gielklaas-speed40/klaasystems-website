@@ -51,12 +51,26 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(eerste["gemeente"], "Eindhoven")
         self.assertEqual(eerste["werksoort"], "dakkapel")
         self.assertEqual(eerste["status"], "verleend")
-        self.assertTrue(eerste["url"].endswith("gmb-2026-400001.html"))
+        self.assertEqual(eerste["url"], "https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html")
+        self.assertEqual(eerste["activiteit"], "bouwen")
+        self.assertEqual(eerste["coord"], "51.43810,5.47520")
         self.assertNotIn("Dorpsstraat", eerste["omschrijving"])
         groningen = next(v for v in verwerkt if v["id"] == "gmb-2026-400006")
         self.assertEqual(groningen["gemeente"], "Groningen")
         kap = next(v for v in verwerkt if v["id"] == "gmb-2026-400003")
         self.assertFalse(kap["is_bouw"])
+
+    def test_activiteit_bouwen_zonder_herkende_werksoort(self):
+        v = parse.verwerk({"id": "x", "titel": "Verleende omgevingsvergunning, Kerkstraat 7, 5251 AB Vlijmen", "gemeente": "Heusden", "activiteit": "bouwen"})
+        self.assertEqual(v["werksoort"], "overig")
+        self.assertTrue(v["is_bouw"])
+        self.assertEqual(v["vakgroepen"], ["aannemer"])
+
+    def test_queries(self):
+        q = fetch.bouw_queries("2026-09-01")
+        self.assertIn('w.publicatienaam=="Gemeenteblad"', q[0])
+        self.assertIn('dt.type=="omgevingsvergunning"', q[0])
+        self.assertIn('dt.title any "omgevingsvergunning"', q[1])
 
 
 if __name__ == "__main__":

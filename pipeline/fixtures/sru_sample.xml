@@ -7,17 +7,36 @@
   <sru:records>
     <sru:record>
       <sru:recordSchema>gzd</sru:recordSchema>
-      <sru:recordData><gzd:gzd><gzd:originalData><meta>
-        <owmskern>
+      <sru:recordData><gzd:gzd><gzd:originalData><overheidwetgeving:meta xmlns:overheidwetgeving="http://standaarden.overheid.nl/wetgeving/" xmlns:cd="http://standaarden.overheid.nl/cup/data" xmlns:c="http://standaarden.overheid.nl/collectie/">
+        <overheidwetgeving:owmskern>
           <dcterms:identifier>gmb-2026-400001</dcterms:identifier>
           <dcterms:title>Gemeente Eindhoven - verleende omgevingsvergunning voor het plaatsen van een dakkapel, Dorpsstraat 12, 5611 AB Eindhoven</dcterms:title>
-          <dcterms:type>Gemeenteblad</dcterms:type>
-          <dcterms:creator>Eindhoven</dcterms:creator>
+          <dcterms:language>nl</dcterms:language>
+          <dcterms:type scheme="OVERHEIDop.Rubriek">omgevingsvergunning</dcterms:type>
+          <dcterms:creator scheme="OVERHEID.Gemeente">Eindhoven</dcterms:creator>
+          <dcterms:modified>2026-09-11</dcterms:modified>
+        </overheidwetgeving:owmskern>
+        <overheidwetgeving:owmsmantel>
           <dcterms:available>2026-09-11</dcterms:available>
-        </owmskern>
-        <tpmeta><overheidbm:bekendmakingType>omgevingsvergunning</overheidbm:bekendmakingType></tpmeta>
-      </meta></gzd:originalData>
-      <gzd:enrichedData><gzd:itemUrl manifestation="html">https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html</gzd:itemUrl></gzd:enrichedData>
+          <dcterms:hasVersion resourceIdentifier="https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html">1</dcterms:hasVersion>
+          <dcterms:subject scheme="OVERHEID.TaxonomieBeleidsagendaDecentraal">Ruimte en infrastructuur | Organisatie en beleid</dcterms:subject>
+        </overheidwetgeving:owmsmantel>
+        <overheidwetgeving:tpmeta>
+          <c:product-area>officielepublicaties</c:product-area>
+          <overheidwetgeving:activiteit scheme="OVERHEIDop.ActiviteitOmgevingsvergunning">bouwen</overheidwetgeving:activiteit>
+          <overheidwetgeving:publicatienaam>Gemeenteblad</overheidwetgeving:publicatienaam>
+          <overheidwetgeving:gebiedsmarkering scheme="OVERHEIDop.locatietype"><overheidwetgeving:Punt>
+            <overheidwetgeving:geometrie>POINT(161000 383000)</overheidwetgeving:geometrie>
+            <overheidwetgeving:locatiepunt>51.4381 5.4752</overheidwetgeving:locatiepunt>
+            <overheidwetgeving:ligtInGemeente>Eindhoven</overheidwetgeving:ligtInGemeente>
+          </overheidwetgeving:Punt></overheidwetgeving:gebiedsmarkering>
+        </overheidwetgeving:tpmeta>
+      </overheidwetgeving:meta></gzd:originalData>
+      <gzd:enrichedData>
+        <gzd:url>https://repository.overheid.nl/frbr/officielepublicaties/gmb/2026/gmb-2026-400001/1/xml/gmb-2026-400001.xml</gzd:url>
+        <gzd:preferredUrl>https://zoek.officielebekendmakingen.nl/gmb-2026-400001.html</gzd:preferredUrl>
+        <gzd:itemUrl manifestation="html">https://repository.overheid.nl/frbr/officielepublicaties/gmb/2026/gmb-2026-400001/1/html/gmb-2026-400001.html</gzd:itemUrl>
+      </gzd:enrichedData>
       </gzd:gzd></sru:recordData>
     </sru:record>
     <sru:record>

@@ -41,20 +41,16 @@ jobs:
       - name: Debug
         if: ${{ inputs.debug }}
         run: python pipeline/run.py --debug --since "${{ inputs.since || '3' }}"
-      - name: Droge run na push
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          python pipeline/probe.py
-          echo
-          python pipeline/run.py --since 2 --dry-run --debug
       - name: Ophalen en bouwen
-        if: ${{ github.event_name != 'push' && !inputs.debug }}
+        if: ${{ !inputs.debug }}
         run: |
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run --debug"; fi
-          python pipeline/run.py --since "${{ inputs.since || '3' }}" $EXTRA
+          SINDS="${{ inputs.since || '3' }}"
+          if [ "${{ github.event_name }}" = "push" ]; then SINDS=14; fi
+          python pipeline/run.py --since "$SINDS" $EXTRA
       - name: Committen
-        if: ${{ github.event_name != 'push' && !inputs.debug && !inputs.dry_run }}
+        if: ${{ !inputs.debug && !inputs.dry_run }}
         run: |
           git config user.name "vergunningen-bot"
           git config user.email "vergunningen-bot@users.noreply.github.com"

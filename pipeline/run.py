@@ -20,7 +20,7 @@ import build  # noqa: E402
 import fetch  # noqa: E402
 import parse  # noqa: E402
 
-BEWAAR_DAGEN = 120
+BEWAAR_DAGEN = 75
 
 
 def laad_opslag(pad: str) -> dict:
@@ -88,7 +88,7 @@ def main() -> int:
     os.makedirs(os.path.dirname(opslag_pad), exist_ok=True)
     opslag["bijgewerkt"] = vandaag.isoformat()
     with open(opslag_pad, "w", encoding="utf-8") as f:
-        json.dump(opslag, f, ensure_ascii=False)
+        json.dump(opslag, f, ensure_ascii=False, separators=(",", ":"))
     stats = build.bouw_site(alle, args.out, vandaag)
     print(f"gebouwd: {stats}")
     return 0
