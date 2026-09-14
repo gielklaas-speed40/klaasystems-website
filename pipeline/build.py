@@ -27,6 +27,41 @@ STATUS_LABEL = {
     "geweigerd": "geweigerd", "ingetrokken": "ingetrokken", "melding": "melding", "onbekend": "status onbekend",
 }
 FORMSPREE = "https://formspree.io/f/mwlewqjg"
+CONFIG_PAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+
+def laad_config() -> dict:
+    try:
+        with open(CONFIG_PAD, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {"partners": {}, "adsense_client": "", "minimum_per_pagina": 3}
+
+
+CONFIG = laad_config()
+
+CONSUMENT = {
+    "dakkapel": {
+        "pad": "dakkapel", "kop": "Dakkapel in {g}", "wat": "een dakkapel", "meervoud": "dakkapellen",
+        "titel": "Dakkapel plaatsen in {g}: vergunning, recente aanvragen en offertes",
+        "regels": "Een dakkapel aan de achterkant is vaak vergunningsvrij, zolang hij binnen de landelijke maten blijft: niet hoger dan 1,75 meter, minstens een halve meter van de dakrand en de nok, en niet op een monument of in een beschermd stadsgezicht. Aan de voorkant of zijkant heb je bijna altijd een omgevingsvergunning nodig. De vergunningcheck op omgevingsloket.nl geeft voor jouw adres uitsluitsel.",
+    },
+    "aanbouw": {
+        "pad": "aanbouw", "kop": "Aanbouw of uitbouw in {g}", "wat": "een aanbouw of uitbouw", "meervoud": "aanbouwen en uitbouwen",
+        "titel": "Aanbouw of uitbouw in {g}: vergunning, recente aanvragen en offertes",
+        "regels": "Een aanbouw aan de achterkant is vergunningsvrij tot vier meter diep, mits het achtererf niet meer dan de helft wordt bebouwd en de aanbouw niet hoger is dan de eerste verdiepingsvloer plus dertig centimeter. Bij een monument, een beschermd dorpsgezicht of een aanbouw aan de zijkant is een omgevingsvergunning nodig. De vergunningcheck op omgevingsloket.nl rekent het voor jouw adres uit.",
+    },
+    "gevel": {
+        "pad": "kozijnen", "kop": "Kozijnen en gevel in {g}", "wat": "nieuwe kozijnen of een gevelwijziging", "meervoud": "gevelwijzigingen en kozijnvervangingen",
+        "titel": "Kozijnen vervangen in {g}: vergunning, recente aanvragen en offertes",
+        "regels": "Kozijnen vervangen in dezelfde maat en indeling is meestal vergunningsvrij. Zodra de gevelindeling verandert, bijvoorbeeld een groter raam, een extra deur of een andere kleur bij een monument, is een omgevingsvergunning nodig. Bij een beschermd stads- of dorpsgezicht geldt dat ook voor de voorgevel. De vergunningcheck op omgevingsloket.nl geeft per adres het antwoord.",
+    },
+    "zonnepanelen": {
+        "pad": "zonnepanelen", "kop": "Zonnepanelen in {g}", "wat": "zonnepanelen", "meervoud": "zonnepaneelinstallaties",
+        "titel": "Zonnepanelen in {g}: wanneer een vergunning nodig is, recente aanvragen en offertes",
+        "regels": "Zonnepanelen op een schuin dak zijn vergunningsvrij als ze binnen het dakvlak blijven en dezelfde hellingshoek hebben. Op een plat dak moet de afstand tot de dakrand minstens gelijk zijn aan de hoogte van het paneel. Bij monumenten en beschermde gezichten is een vergunning nodig, en dat zijn precies de aanvragen die je hieronder ziet.",
+    },
+}
 
 CSS = """
 :root{--bg:#f5f6f8;--panel:#fff;--ink:#15202b;--mut:#61707f;--line:#dde3ea;--acc:#0f6b5c;--acc-soft:#e3f2ee;--warn:#b3541e}
@@ -49,6 +84,8 @@ th{font-weight:600;color:var(--mut);font-size:12.5px;background:#fafbfc}
 tr:last-child td{border-bottom:none}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl{overflow-x:auto}
+.knop{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600}
+.blok{background:var(--panel);border:1px solid var(--line);padding:16px 18px;max-width:640px;margin:8px 0 20px}
 .tag{display:inline-block;padding:1px 7px;border-radius:4px;background:var(--acc-soft);color:var(--acc);font-size:12px;white-space:nowrap}
 .tag.grijs{background:#eef1f4;color:var(--mut)}
 .klein{color:var(--mut);font-size:13px}
@@ -79,6 +116,9 @@ def datum_nl(iso: str) -> str:
 
 def pagina(titel: str, body: str, diepte: int, omschrijving: str, canonical: str) -> str:
     root = "../" * diepte
+    adsense = ""
+    if CONFIG.get("adsense_client"):
+        adsense = f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={e(CONFIG["adsense_client"])}" crossorigin="anonymous"></script>'
     return f"""<!doctype html>
 <html lang="nl">
 <head>
@@ -87,6 +127,7 @@ def pagina(titel: str, body: str, diepte: int, omschrijving: str, canonical: str
 <title>{e(titel)}</title>
 <meta name="description" content="{e(omschrijving)}">
 <link rel="canonical" href="https://klaasystems.nl/vergunningen/{canonical}">
+{adsense}
 <style>{CSS}</style>
 </head>
 <body>
@@ -196,8 +237,13 @@ def bouw_site(vergunningen: list[dict], uit: str, vandaag: dt.date, dagen_lijst:
         samenvatting = ", ".join(f"{WERKSOORT_LABEL.get(w, w).lower()} {n}" for w, n in soorten.most_common(5))
         verleend = [v for v in items if v["status"] == "verleend"]
         rest = [v for v in items if v["status"] != "verleend"]
+        minimum = int(CONFIG.get("minimum_per_pagina", 3))
+        eigenaar_links = [f'<a href="../{CONSUMENT[w]["pad"]}/{slug}/">{e(CONSUMENT[w]["kop"].format(g=g))}</a>'
+                          for w in CONSUMENT if sum(1 for v in items if v["werksoort"] == w) >= minimum]
+        eigenaar = f'<p class="klein">Zelf iets bouwen in {e(g)}? Lees over de regels en offertes voor {" of ".join(eigenaar_links)}.</p>' if eigenaar_links else ""
         body = f"""<h1>Bouwvergunningen in {e(g)}</h1>
 <p class="lead">Omgevingsvergunningen voor bouwwerk die de gemeente {e(g)} de afgelopen {dagen_lijst} dagen heeft gepubliceerd. Laatste 30 dagen: {samenvatting or 'geen bouwvergunningen'}.</p>
+{eigenaar}
 <h2>Verleend</h2>
 <p class="klein">De vergunning is rond, het werk kan beginnen. Meestal is de hoofdaannemer al gekozen, het afbouwwerk en de leveringen vaak nog niet.</p>
 {tabel(verleend, False)}
@@ -231,12 +277,69 @@ def bouw_site(vergunningen: list[dict], uit: str, vandaag: dt.date, dagen_lijst:
             f.write(pagina(f"{lbl}, verleende omgevingsvergunningen per gemeente", body, 2,
                            f"Overzicht van omgevingsvergunningen voor {lbl.lower()} in Nederland, met adres, gemeente en datum.", f"werk/{w}/"))
 
+    # Consumentenpagina's per gemeente en werksoort
+    consument_urls = bouw_consument(bouw, uit, naam, dagen_lijst)
+
     # Sitemap voor deze sectie
-    urls = ["", "werk/", "over.html"] + [f"{s}/" for s in per_gemeente] + [f"werk/{w}/" for w in per_werk]
+    urls = ["", "werk/", "over.html"] + [f"{s}/" for s in per_gemeente] + [f"werk/{w}/" for w in per_werk] + consument_urls
     with open(os.path.join(uit, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
         for u in urls:
             f.write(f"<url><loc>https://klaasystems.nl/vergunningen/{e(u)}</loc><lastmod>{vandaag.isoformat()}</lastmod></url>\n")
         f.write("</urlset>\n")
 
-    return {"gemeenten": len(per_gemeente), "werksoorten": len(per_werk), "recent": len(recent), "bouw": len(bouw)}
+    return {"gemeenten": len(per_gemeente), "werksoorten": len(per_werk), "recent": len(recent), "bouw": len(bouw), "consument": len(consument_urls)}
+
+
+def bouw_consument(bouw: list[dict], uit: str, naam: dict, dagen_lijst: int) -> list[str]:
+    """Pagina's voor huiseigenaren: per gemeente en werksoort, alleen bij genoeg data."""
+    minimum = int(CONFIG.get("minimum_per_pagina", 3))
+    partners = CONFIG.get("partners", {})
+    urls: list[str] = []
+    per: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    for v in bouw:
+        if v["werksoort"] in CONSUMENT:
+            per[(v["werksoort"], v["gemeente_slug"])].append(v)
+    for (werk, slug), items in per.items():
+        if len(items) < minimum:
+            continue
+        c = CONSUMENT[werk]
+        g = naam[slug]
+        verleend = [v for v in items if v["status"] == "verleend"]
+        aangevraagd = [v for v in items if v["status"] in ("aangevraagd", "ontwerp")]
+        partner = partners.get(werk) or {}
+        offerte = ""
+        if partner.get("url"):
+            offerte = f"""<h2>Offertes vergelijken</h2>
+<div class="blok"><p style="margin:0 0 12px">Wil je {e(c['wat'])} laten plaatsen, dan is het slim om drie prijzen naast elkaar te leggen. Via {e(partner.get('naam') or 'onze partner')} vraag je ze in één keer aan bij bedrijven die in {e(g)} werken.</p>
+<a class="knop" href="{e(partner['url'])}" rel="sponsored nofollow noopener" target="_blank">Vraag drie offertes aan</a>
+<p class="klein" style="margin:12px 0 0">Wij ontvangen een vergoeding van {e(partner.get('naam') or 'de partner')} als je via deze knop offertes aanvraagt. Dat verandert niets aan de prijs die je betaalt.</p></div>"""
+        pad = f"{c['pad']}/{slug}/"
+        os.makedirs(os.path.join(uit, c["pad"], slug), exist_ok=True)
+        body = f"""<h1>{e(c['kop'].format(g=g))}</h1>
+<p class="lead">In de afgelopen {dagen_lijst} dagen publiceerde de gemeente {e(g)} {len(items)} bekendmakingen over {e(c['meervoud'])}: {len(verleend)} verleend en {len(aangevraagd)} in aanvraag. Hieronder staan de adressen, de regels, en hoe je aan prijzen komt.</p>
+<h2>Heb je een vergunning nodig?</h2>
+<p>{e(c['regels'])}</p>
+<p class="klein">Dit is de landelijke hoofdregel uit het Besluit bouwwerken leefomgeving. Gemeenten kunnen in het omgevingsplan strengere eisen stellen, dus doe altijd de vergunningcheck.</p>
+<h2>Recent in {e(g)}</h2>
+{tabel(items, False)}
+{offerte}
+<p class="klein">Bron: gemeenteblad van {e(g)} via officielebekendmakingen.nl. Adressen zijn de adressen van het bouwwerk zoals de gemeente die publiceert, zonder namen van aanvragers.</p>"""
+        with open(os.path.join(uit, c["pad"], slug, "index.html"), "w", encoding="utf-8") as f:
+            f.write(pagina(c["titel"].format(g=g), body, 2,
+                           f"{c['kop'].format(g=g)}: wanneer je een vergunning nodig hebt, welke adressen recent een aanvraag deden en waar je offertes vergelijkt.", pad))
+        urls.append(pad)
+    # Indexpagina per werksoort met alle gemeenten
+    for werk, c in CONSUMENT.items():
+        slugs = sorted({s for (w, s) in per if w == werk and len(per[(w, s)]) >= minimum}, key=lambda s: naam[s])
+        if not slugs:
+            continue
+        os.makedirs(os.path.join(uit, c["pad"]), exist_ok=True)
+        links = "".join(f'<div><a href="{s}/">{e(naam[s])}</a> <span class="n">{len(per[(werk, s)])}</span></div>' for s in slugs)
+        body = f"""<h1>{e(c['kop'].format(g='jouw gemeente'))}</h1>
+<p class="lead">Per gemeente zie je hoeveel {e(c['meervoud'])} de afgelopen {dagen_lijst} dagen zijn aangevraagd en verleend, welke regels gelden en waar je offertes vergelijkt.</p>
+<div class="kolommen">{links}</div>"""
+        with open(os.path.join(uit, c["pad"], "index.html"), "w", encoding="utf-8") as f:
+            f.write(pagina(c["titel"].format(g="jouw gemeente"), body, 1, f"{c['meervoud'].capitalize()} per gemeente: regels, recente aanvragen en offertes.", f"{c['pad']}/"))
+        urls.append(f"{c['pad']}/")
+    return urls
