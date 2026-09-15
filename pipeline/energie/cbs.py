@@ -112,10 +112,13 @@ def tabellen(zoekterm: str, log=print) -> list[dict]:
 
 
 def kolommen_van(tabel: str, velden: dict | None = None) -> dict:
-    """{CBS-kolom: onze naam} op basis van de kolomtitels van de tabel."""
+    """{CBS-kolom: onze naam} op basis van de kolomtitels van de tabel. Leeg als de tabel geen wijkdimensie heeft."""
     velden = velden or VELDEN
     props = _get(FEED.format(tabel=tabel) + "/DataProperties?$format=json").get("value", [])
-    uit = {"WijkenEnBuurten": "code"}
+    geo = next((p["Key"] for p in props if p.get("Type") in ("GeoDetail", "GeoDimension") or p.get("Key") == "WijkenEnBuurten"), None)
+    if not geo:
+        return {}
+    uit = {geo: "code"}
     gebruikt = set()
     for naam, kandidaten in velden.items():
         for kandidaat in kandidaten:
@@ -128,7 +131,8 @@ def kolommen_van(tabel: str, velden: dict | None = None) -> dict:
 
 
 def rijen_van(tabel: str, kolommen: dict, extra_filter: str = "") -> list[dict]:
-    filt = "(startswith(WijkenEnBuurten,'GM') or startswith(WijkenEnBuurten,'WK') or startswith(WijkenEnBuurten,'NL'))"
+    geo = next(k for k, v in kolommen.items() if v == "code")
+    filt = f"(startswith({geo},'GM') or startswith({geo},'WK') or startswith({geo},'NL'))"
     if extra_filter:
         filt = f"{filt} and {extra_filter}"
     params = {"$format": "json", "$select": ",".join(kolommen), "$filter": filt}
@@ -144,9 +148,22 @@ def haal_op(log=print) -> tuple[list[dict], dict]:
     kwb = tabellen("Kerncijfers wijken en buurten", log)
     if not kwb:
         raise RuntimeError("geen kerncijfers-tabel gevonden in de catalogus")
-    basis = kwb[0]
-    kol = kolommen_van(basis["id"])
-    rijen = rijen_van(basis["id"], kol)
+    basis, kol, rijen = None, {}, []
+    for t in kwb:
+        try:
+            kol = kolommen_van(t["id"])
+            if "woningen" not in kol.values():
+                continue
+            rijen = rijen_van(t["id"], kol)
+        except urllib.error.HTTPError as e:
+            log(f"CBS {t['id']}: overgeslagen ({e})")
+            continue
+        if rijen:
+            basis = t
+            break
+    if not basis:
+        raise RuntimeError("geen bruikbare kerncijfers-tabel gevonden")
+    kwb = [t for t in kwb if t["jaar"] < basis["jaar"] or t["id"] == basis["id"]]
     bronnen = {"kerncijfers": basis, "energie": None, "aanvulling": None}
     log(f"CBS {basis['id']}: {len(rijen)} rijen, {len(kol)} kolommen")
     per_code = {r["code"]: r for r in rijen}
@@ -157,13 +174,17 @@ def haal_op(log=print) -> tuple[list[dict], dict]:
             continue
         energie = tabellen("Energieverbruik particuliere woningen", log)
         for t in energie:
-            ek = kolommen_van(t["id"], {"gas_m3": VELDEN["gas_m3"], "stroom_kwh": VELDEN["stroom_kwh"], "stadsverwarming_pct": VELDEN["stadsverwarming_pct"]})
-            if len(ek) < 2:
-                continue
             try:
-                erijen = rijen_van(t["id"], ek, "Woningkenmerken eq 'T001100'")
-            except urllib.error.HTTPError:
-                erijen = rijen_van(t["id"], ek)
+                ek = kolommen_van(t["id"], {"gas_m3": VELDEN["gas_m3"], "stroom_kwh": VELDEN["stroom_kwh"], "stadsverwarming_pct": VELDEN["stadsverwarming_pct"]})
+                if len(ek) < 2:
+                    continue
+                try:
+                    erijen = rijen_van(t["id"], ek, "Woningkenmerken eq 'T001100'")
+                except urllib.error.HTTPError:
+                    erijen = rijen_van(t["id"], ek)
+            except urllib.error.HTTPError as e:
+                log(f"CBS {t['id']}: overgeslagen ({e})")
+                continue
             if gevuld(erijen, "gas_m3") > 100:
                 for er in erijen:
                     doel = per_code.get(er["code"])
@@ -178,13 +199,17 @@ def haal_op(log=print) -> tuple[list[dict], dict]:
 
     # 2. Overige energievelden uit een oudere kerncijfers-jaargang waar ze wel gevuld zijn.
     leeg = [v for v in ENERGIEVELDEN if gevuld(rijen, v) <= 100]
-    for t in kwb[1:4]:
+    for t in [t for t in kwb if t["id"] != basis["id"]][:3]:
         if not leeg:
             break
-        ok = kolommen_van(t["id"], {v: VELDEN[v] for v in leeg})
-        if len(ok) < 2:
+        try:
+            ok = kolommen_van(t["id"], {v: VELDEN[v] for v in leeg})
+            if len(ok) < 2:
+                continue
+            orijen = rijen_van(t["id"], ok)
+        except urllib.error.HTTPError as e:
+            log(f"CBS {t['id']}: overgeslagen ({e})")
             continue
-        orijen = rijen_van(t["id"], ok)
         gehaald = [v for v in leeg if gevuld(orijen, v) > 100]
         if not gehaald:
             continue
