@@ -113,12 +113,17 @@ def tabellen(zoekterm: str, log=print) -> list[dict]:
 
 def kolommen_van(tabel: str, velden: dict | None = None) -> dict:
     """{CBS-kolom: onze naam} op basis van de kolomtitels van de tabel. Leeg als de tabel geen wijkdimensie heeft."""
-    velden = velden or VELDEN
+    velden = dict(velden or VELDEN)
+    velden.setdefault("gemeente", VELDEN["gemeente"])
+    velden.setdefault("soort", VELDEN["soort"])
     props = _get(FEED.format(tabel=tabel) + "/DataProperties?$format=json").get("value", [])
     geo = next((p["Key"] for p in props if p.get("Type") in ("GeoDetail", "GeoDimension") or p.get("Key") == "WijkenEnBuurten"), None)
     if not geo:
         return {}
     uit = {geo: "code"}
+    for p in props:
+        if p.get("Type") == "Dimension" and p.get("Key") != geo:
+            uit[p["Key"]] = "_dim_" + p["Key"]
     gebruikt = set()
     for naam, kandidaten in velden.items():
         for kandidaat in kandidaten:
@@ -176,15 +181,20 @@ def haal_op(log=print) -> tuple[list[dict], dict]:
         for t in energie:
             try:
                 ek = kolommen_van(t["id"], {"gas_m3": VELDEN["gas_m3"], "stroom_kwh": VELDEN["stroom_kwh"], "stadsverwarming_pct": VELDEN["stadsverwarming_pct"]})
-                if len(ek) < 2:
+                if "gas_m3" not in ek.values():
+                    log(f"CBS {t['id']}: geen gaskolom gevonden")
                     continue
+                dim = next((k for k, v in ek.items() if v == "_dim_Woningkenmerken"), None)
                 try:
-                    erijen = rijen_van(t["id"], ek, "Woningkenmerken eq 'T001100'")
+                    erijen = rijen_van(t["id"], ek, f"{dim} eq 'T001100'") if dim else rijen_van(t["id"], ek)
                 except urllib.error.HTTPError:
                     erijen = rijen_van(t["id"], ek)
+                if dim:
+                    erijen = [r for r in erijen if (r.get("_dim_Woningkenmerken") or "T001100").strip() == "T001100"]
             except urllib.error.HTTPError as e:
                 log(f"CBS {t['id']}: overgeslagen ({e})")
                 continue
+            log(f"CBS {t['id']}: {len(erijen)} energierijen, {gevuld(erijen, 'gas_m3')} wijken met gas")
             if gevuld(erijen, "gas_m3") > 100:
                 for er in erijen:
                     doel = per_code.get(er["code"])
@@ -211,6 +221,7 @@ def haal_op(log=print) -> tuple[list[dict], dict]:
             log(f"CBS {t['id']}: overgeslagen ({e})")
             continue
         gehaald = [v for v in leeg if gevuld(orijen, v) > 100]
+        log(f"CBS {t['id']}: {len(orijen)} rijen, gevuld: " + ", ".join(f"{v} {gevuld(orijen, v)}" for v in leeg))
         if not gehaald:
             continue
         for orij in orijen:
@@ -240,6 +251,9 @@ def normaliseer(rij: dict, kolommen: dict | None = None) -> dict:
     kolommen = kolommen or KOLOMMEN
     uit = {naam: None for naam in VELDEN}
     for cbs, naam in kolommen.items():
+        if naam.startswith("_dim_"):
+            uit[naam] = rij.get(cbs)
+            continue
         w = rij.get(cbs)
         if isinstance(w, str):
             w = w.strip()
