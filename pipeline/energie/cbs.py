@@ -6,7 +6,9 @@ import urllib.parse
 import urllib.request
 
 TABEL = "86165NED"
-BASIS = f"https://opendata.cbs.nl/ODataApi/odata/{TABEL}/TypedDataSet"
+# ODataFeed ondersteunt paginering ($skip en odata.nextLink), ODataApi niet.
+FEED = f"https://opendata.cbs.nl/ODataFeed/odata/{TABEL}"
+BASIS = f"{FEED}/TypedDataSet"
 USER_AGENT = "klaasystems-energie/1.0 (+https://klaasystems.nl/energie/)"
 
 # CBS-kolom -> onze naam
@@ -51,34 +53,36 @@ def _get(url: str, timeout: int = 120) -> dict:
 def wijknamen(log=print) -> dict:
     """Code -> naam van wijk of gemeente, uit de dimensie WijkenEnBuurten."""
     namen: dict = {}
-    skip = 0
-    while True:
-        url = f"https://opendata.cbs.nl/ODataApi/odata/{TABEL}/WijkenEnBuurten?$format=json&$top=10000&$skip={skip}"
-        data = _get(url)
-        rijen = data.get("value", [])
-        for r in rijen:
-            namen[(r.get("Key") or "").strip()] = (r.get("Title") or "").strip()
-        if len(rijen) < 10000:
-            break
-        skip += 10000
+    for r in _alles(f"{FEED}/WijkenEnBuurten?$format=json"):
+        namen[(r.get("Key") or "").strip()] = (r.get("Title") or "").strip()
     log(f"CBS: {len(namen)} regionamen")
     return namen
+
+
+def _alles(url: str) -> list[dict]:
+    """Alle rijen van een feed-URL, met odata.nextLink of $skip als vervolg."""
+    rijen: list[dict] = []
+    skip = 0
+    volgende = url
+    while volgende:
+        data = _get(volgende)
+        deel = data.get("value", [])
+        rijen.extend(deel)
+        volgende = data.get("odata.nextLink") or data.get("@odata.nextLink")
+        if not volgende and len(deel) >= 10000:
+            skip += len(deel)
+            volgende = f"{url}&$skip={skip}"
+        if not deel:
+            break
+    return rijen
 
 
 def haal_op(log=print) -> list[dict]:
     """Alle gemeente- en wijkrijen (geen buurten) met de kolommen uit KOLOMMEN."""
     select = ",".join(KOLOMMEN)
     filt = "startswith(WijkenEnBuurten,'GM') or startswith(WijkenEnBuurten,'WK') or startswith(WijkenEnBuurten,'NL')"
-    rijen: list[dict] = []
-    skip = 0
-    while True:
-        params = {"$format": "json", "$select": select, "$filter": filt, "$top": 10000, "$skip": skip}
-        data = _get(f"{BASIS}?{urllib.parse.urlencode(params)}")
-        deel = data.get("value", [])
-        rijen.extend(deel)
-        if len(deel) < 10000:
-            break
-        skip += 10000
+    params = {"$format": "json", "$select": select, "$filter": filt}
+    rijen = _alles(f"{BASIS}?{urllib.parse.urlencode(params)}")
     log(f"CBS: {len(rijen)} rijen opgehaald")
     return [normaliseer(r) for r in rijen]
 
