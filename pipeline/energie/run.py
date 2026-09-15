@@ -34,18 +34,21 @@ def main() -> int:
             d = json.load(f)
         rijen = [cbs.normaliseer(r) for r in d["rijen"]]
         namen = d["namen"]
+        bronnen = d.get("bronnen") or {"kerncijfers": {"id": "fixture", "jaar": 2025}, "energie": None, "aanvulling": None}
     elif args.rebuild:
         with open(opslag, encoding="utf-8") as f:
             d = json.load(f)
-        rijen, namen = d["rijen"], d["namen"]
+        rijen, namen, bronnen = d["rijen"], d["namen"], d.get("bronnen") or {}
     else:
-        rijen = cbs.haal_op()
-        namen = cbs.wijknamen()
+        rijen, bronnen = cbs.haal_op()
+        namen = cbs.wijknamen(bronnen["kerncijfers"]["id"])
         os.makedirs(os.path.dirname(opslag), exist_ok=True)
         with open(opslag, "w", encoding="utf-8") as f:
-            json.dump({"bijgewerkt": vandaag.isoformat(), "rijen": rijen, "namen": namen}, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"rijen: {len(rijen)}, namen: {len(namen)}")
-    print("gebouwd:", build.bouw_site(rijen, namen, args.out, vandaag))
+            json.dump({"bijgewerkt": vandaag.isoformat(), "bronnen": bronnen, "rijen": rijen, "namen": namen}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"rijen: {len(rijen)}, namen: {len(namen)}, bronnen: {bronnen}")
+    for veld in ("gas_m3", "zonnestroom_pct", "aardgasvrij_pct"):
+        print(f"  {veld}: {cbs.gevuld(rijen, veld)} wijken gevuld")
+    print("gebouwd:", build.bouw_site(rijen, namen, args.out, vandaag, bronnen))
     return 0
 
 

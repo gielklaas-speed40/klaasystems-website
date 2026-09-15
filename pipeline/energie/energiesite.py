@@ -39,6 +39,21 @@ def getal(w, eenheid: str = "", decimalen: int = 0) -> str:
     return f"{s}{eenheid}"
 
 
+BRONTEKST = "CBS Kerncijfers wijken en buurten"
+
+
+def brontekst(bronnen: dict | None) -> str:
+    if not bronnen or not bronnen.get("kerncijfers"):
+        return "CBS Kerncijfers wijken en buurten."
+    k = bronnen["kerncijfers"]
+    delen = [f"woningcijfers uit CBS Kerncijfers wijken en buurten {k.get('jaar', '')}"]
+    if bronnen.get("energie"):
+        delen.append(f"gas en stroom uit CBS Energieverbruik particuliere woningen {bronnen['energie'].get('jaar', '')} (verbruik over {int(bronnen['energie'].get('jaar', 0) or 0) - 1})")
+    if bronnen.get("aanvulling"):
+        delen.append(f"zonnestroom en aardgasvrij uit de kerncijfers {bronnen['aanvulling'].get('jaar', '')}")
+    return "Bron: " + ", ".join(delen) + "."
+
+
 def pagina(titel: str, body: str, diepte: int, omschrijving: str, canonical: str) -> str:
     root = "../" * diepte
     adsense = ""
@@ -63,7 +78,7 @@ def pagina(titel: str, body: str, diepte: int, omschrijving: str, canonical: str
 <main><div class="wrap">
 {body}
 </div></main>
-<footer><div class="wrap">Bron: CBS Kerncijfers wijken en buurten 2025, aardgas- en stroomcijfers over 2024. Subsidiebedragen van RVO, controleer altijd de actuele regeling. Een dienst van <a href="https://klaasystems.nl/">Klaasystems</a>.</div></footer>
+<footer><div class="wrap">{BRONTEKST} Subsidiebedragen van RVO, controleer altijd de actuele regeling. Een dienst van <a href="https://klaasystems.nl/">Klaasystems</a>.</div></footer>
 </body>
 </html>
 """
@@ -154,7 +169,9 @@ def subsidietabel(kort: bool = False) -> str:
 <p class="klein">{e(s['isolatie']['toelichting'])} Zonnepanelen: {e(s['zonnepanelen']['toelichting'])} Thuisbatterij: {e(s['thuisbatterij']['toelichting'])} Bron en actuele voorwaarden: <a href="{e(s['bron'])}" rel="noopener" target="_blank">rvo.nl</a>.</p>"""
 
 
-def bouw_site(rijen: list[dict], namen: dict, uit: str, vandaag: dt.date) -> dict:
+def bouw_site(rijen: list[dict], namen: dict, uit: str, vandaag: dt.date, bronnen: dict | None = None) -> dict:
+    global BRONTEKST
+    BRONTEKST = brontekst(bronnen)
     nl = next((r for r in rijen if r["code"] == "NL00"), {})
     gemeenten = {r["code"]: r for r in rijen if r["soort"] == "gemeente"}
     wijken_per_gemeente: dict[str, list[dict]] = defaultdict(list)
@@ -228,7 +245,7 @@ def bouw_site(rijen: list[dict], namen: dict, uit: str, vandaag: dt.date) -> dic
                     for gm, g in sorted(gemeenten.items(), key=lambda kv: kv[1]["gemeente"]))
     body = f"""<h1>Gasverbruik, zonnepanelen en subsidie per wijk</h1>
 <p class="lead">Voor elke wijk in Nederland: hoeveel gas en stroom een woning gemiddeld verbruikt, hoeveel huizen zonnepanelen hebben, hoe oud de woningen zijn en wat de ISDE-subsidie in {SUBSIDIES['jaar']} oplevert. Landelijk verbruikt een woning {getal(nl.get('gas_m3'))} m³ gas en {getal(nl.get('stroom_kwh'))} kWh stroom per jaar, {getal(nl.get('zonnestroom_pct'), '%')} van de woningen heeft zonnepanelen.</p>
-<p class="klein">Cijfers van het CBS over 2024, gepubliceerd in 2025. Bijgewerkt op {e(datum_nl(vandaag.isoformat()))}.</p>
+<p class="klein">{e(BRONTEKST)} Bijgewerkt op {e(datum_nl(vandaag.isoformat()))}.</p>
 <h2>Kies je gemeente</h2>
 <div class="kolommen">{links}</div>"""
     with open(os.path.join(uit, "index.html"), "w", encoding="utf-8") as f:
