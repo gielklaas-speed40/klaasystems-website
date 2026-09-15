@@ -1,0 +1,19 @@
+{
+  "_uitleg": "ISDE-bedragen per jaar. Een agent werkt dit jaarlijks bij vanaf rvo.nl. Bedragen in euro.",
+  "jaar": 2026,
+  "bron": "https://www.rvo.nl/subsidies-financiering/isde",
+  "warmtepomp": {"basis": 1025, "per_kw": 225, "bonus_a_plus_plus_plus": 200, "voorbeeld_6kw": 2375, "voorbeeld_10kw": 3275},
+  "isolatie": {
+    "toelichting": "Basisbedrag per m² bij één maatregel, het dubbele bij twee of meer maatregelen binnen 24 maanden. Een warmtepomp of zonneboiler telt mee als maatregel.",
+    "maatregelen": [
+      {"naam": "Spouwmuurisolatie", "per_m2_enkel": 8, "per_m2_dubbel": 16, "minimum_m2": 10},
+      {"naam": "Gevelisolatie (binnen of buiten)", "per_m2_enkel": 38, "per_m2_dubbel": 76, "minimum_m2": 10},
+      {"naam": "Dakisolatie", "per_m2_enkel": 30, "per_m2_dubbel": 60, "minimum_m2": 20},
+      {"naam": "Vloer- of bodemisolatie", "per_m2_enkel": 11, "per_m2_dubbel": 22, "minimum_m2": 20},
+      {"naam": "HR++ glas in bestaande kozijnen", "per_m2_enkel": 25, "per_m2_dubbel": 50, "minimum_m2": 8},
+      {"naam": "Triple glas in nieuwe isolerende kozijnen", "per_m2_enkel": 111, "per_m2_dubbel": 222, "minimum_m2": 8}
+    ]
+  },
+  "zonnepanelen": {"toelichting": "Geen ISDE. Wel btw-vrijstelling op de aanschaf voor woningen en salderen tot en met 2026."},
+  "thuisbatterij": {"toelichting": "Geen landelijke subsidie in 2026. Sommige gemeenten en provincies hebben een eigen regeling."}
+}
