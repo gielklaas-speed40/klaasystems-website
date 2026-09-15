@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -44,10 +45,18 @@ KOLOMMEN = {
 }
 
 
-def _get(url: str, timeout: int = 120) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+def _get(url: str, timeout: int = 120, pogingen: int = 4) -> dict:
+    import time
+    fout = None
+    for i in range(pogingen):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:  # noqa: PERF203
+            fout = e
+            time.sleep(3 * (i + 1))
+    raise fout
 
 
 def wijknamen(log=print) -> dict:
