@@ -37,6 +37,7 @@ class EnergieTests(unittest.TestCase):
         nl, g, w = self.rijen[0], self.rijen[4], self.rijen[5]
         alineas = build.advies(w, g, nl, "Woensel-Zuid")
         self.assertTrue(any("stadsverwarming" in a for a in alineas))
+        self.assertFalse(any("hybride warmtepomp" in a for a in alineas))
         self.assertTrue(any("woningcorporatie" in a for a in alineas))
 
     def test_bouw_site(self):

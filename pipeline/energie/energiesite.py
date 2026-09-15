@@ -104,7 +104,7 @@ def cijfertabel(w: dict, g: dict, nl: dict, wijknaam: str, gemeentenaam: str) ->
         ("Gemiddelde WOZ-waarde", "woz", " duizend euro"),
     ]
     kop = f"<tr><th></th><th>{e(wijknaam)}</th><th>{e(gemeentenaam)}</th><th>Nederland</th></tr>"
-    body = "".join(vergelijk(w, g, nl, veld, eenheid).format(label=e(label)) for label, veld, eenheid in rijen)
+    body = "".join(vergelijk(w, g, nl, veld, eenheid).format(label=e(label)) for label, veld, eenheid in rijen if w.get(veld) is not None)
     return f'<div class="tbl"><table class="cijfers">{kop}{body}</table></div>'
 
 
@@ -123,19 +123,21 @@ def advies(w: dict, g: dict, nl: dict, naam: str) -> list[str]:
         verschil = (gas - gas_nl) / gas_nl * 100
         if verschil > 25:
             uit.append(f"Een woning in {naam} verbruikt gemiddeld {getal(gas)} m³ gas per jaar, {getal(abs(verschil))} procent meer dan het Nederlandse gemiddelde van {getal(gas_nl)} m³. Bij de huidige gasprijs is dat een verschil van enkele honderden euro's per jaar. Isolatie van dak, vloer en spouw haalt daar het meeste vanaf, en dat is ook de maatregel met de hoogste subsidie per euro.")
+        elif verschil < -25 and stads >= 25:
+            uit.append(f"Het gasverbruik in {naam} ligt met {getal(gas)} m³ per woning ruim onder het landelijke gemiddelde van {getal(gas_nl)} m³, omdat {getal(stads)} procent van de woningen op stadsverwarming zit. Voor die huizen is een warmtepomp niet aan de orde. Isolatie en zonnepanelen verlagen de rekening wel, en de isolatiesubsidie geldt ook bij stadsverwarming.")
         elif verschil < -25:
             uit.append(f"Het gasverbruik in {naam} ligt met {getal(gas)} m³ per woning ruim onder het landelijke gemiddelde van {getal(gas_nl)} m³. Dat wijst op kleinere of nieuwere woningen, of op woningen die al van het gas af zijn. Voor wie nog wel gas stookt, is een hybride warmtepomp meestal de logische volgende stap.")
         else:
             uit.append(f"Het gasverbruik in {naam} zit met {getal(gas)} m³ per woning dicht bij het landelijke gemiddelde van {getal(gas_nl)} m³. De grootste besparing zit dan in de combinatie van isolatie en een hybride warmtepomp, waarbij de isolatiesubsidie verdubbelt.")
-    if oud is not None and oud >= 90 and eengezins and eengezins >= 60:
+    if oud is not None and oud >= 95 and eengezins and eengezins >= 75 and gas and gas_nl and gas > gas_nl:
         uit.append(f"Ruim {getal(oud)} procent van de woningen is ouder dan tien jaar en {getal(eengezins)} procent is een eengezinswoning. Precies het type huis waar spouwmuur- en dakisolatie het snelst terugverdienen, vaak binnen vijf jaar.")
     if zon is not None and zon_nl is not None:
         if zon < zon_nl - 8 and koop and koop >= 50:
             uit.append(f"Slechts {getal(zon)} procent van de woningen heeft zonnepanelen, tegen {getal(zon_nl)} procent landelijk, terwijl {getal(koop)} procent koopwoning is. Er ligt hier dus veel dak ongebruikt. De btw op zonnepanelen voor woningen is nul procent, en salderen loopt nog tot en met 2026.")
         elif zon > zon_nl + 8:
             uit.append(f"Met {getal(zon)} procent woningen met zonnepanelen loopt {naam} voor op Nederland ({getal(zon_nl)} procent). Na het einde van salderen wordt een thuisbatterij hier eerder interessant, omdat overdag veel stroom wordt teruggeleverd.")
-    if stads and stads >= 25:
-        uit.append(f"{getal(stads)} procent van de woningen zit op stadsverwarming. Voor die huizen is een warmtepomp niet aan de orde; isolatie en zonnepanelen wel.")
+    if stads and stads >= 25 and not (gas and gas_nl and (gas - gas_nl) / gas_nl * 100 < -25):
+        uit.append(f"{getal(stads)} procent van de woningen zit op stadsverwarming. Voor die huizen is een warmtepomp niet aan de orde, isolatie en zonnepanelen wel.")
     if corporatie is not None and corporatie >= 50:
         uit.append(f"{getal(corporatie)} procent van de woningen is van een woningcorporatie. Huurders vragen isolatie en zonnepanelen aan via de corporatie, niet via de ISDE. De cijfers hieronder gaan vooral op voor de koopwoningen in de wijk.")
     return uit
@@ -213,7 +215,7 @@ def bouw_site(rijen: list[dict], namen: dict, uit: str, vandaag: dt.date, bronne
             os.makedirs(os.path.join(uit, gslug, wslug), exist_ok=True)
             alineas = advies(w, g, nl, wnaam)
             body = f"""<h1>Energie in {e(wnaam)}, {e(gnaam)}</h1>
-<p class="lead">{getal(w.get('woningen'))} woningen, {getal(w.get('koop_pct'), '%')} koop. Gemiddeld {getal(w.get('gas_m3'))} m³ gas en {getal(w.get('stroom_kwh'))} kWh stroom per woning per jaar, {getal(w.get('zonnestroom_pct'), '%')} van de woningen heeft zonnepanelen. Postcode {e(w.get('postcode') or '')}.</p>
+<p class="lead">{getal(w.get('woningen'))} woningen, {getal(w.get('koop_pct'), '%')} koop. Gemiddeld {getal(w.get('gas_m3'))} m³ gas en {getal(w.get('stroom_kwh'))} kWh stroom per woning per jaar, {getal(w.get('zonnestroom_pct'), '%')} van de woningen heeft zonnepanelen.{(' Postcode ' + e(w.get('postcode'))) + '.' if w.get('postcode') else ''}</p>
 <div class="advies">{"".join(f"<p>{e(a)}</p>" for a in alineas)}</div>
 <h2>De cijfers naast elkaar</h2>
 {cijfertabel(w, g, nl, wnaam, gnaam)}
