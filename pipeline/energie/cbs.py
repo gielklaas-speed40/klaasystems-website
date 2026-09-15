@@ -257,6 +257,8 @@ def normaliseer(rij: dict, kolommen: dict | None = None) -> dict:
         w = rij.get(cbs)
         if isinstance(w, str):
             w = w.strip()
+            if w in (".", ""):
+                w = None
         uit[naam] = w
     uit["code"] = (uit.get("code") or "").strip()
     uit["soort"] = (uit.get("soort") or "").strip().lower()
