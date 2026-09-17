@@ -187,5 +187,6 @@ kent geen enkel product. Dat maakt de stap naar een echte catalogus klein.
 
 ## Wat deze demo niet doet
 
-Geen inlog, geen voorraad, geen levertijden en geen betaling. De prijzen in de
-ingebouwde catalogus zijn verzonnen en bedoeld om de rekenregels te laten zien.
+Er zit geen inlog in en de demo kijkt niet naar voorraad, levertijden of
+betaling. De prijzen in de ingebouwde catalogus zijn verzonnen en staan er om de
+rekenregels te laten zien.
