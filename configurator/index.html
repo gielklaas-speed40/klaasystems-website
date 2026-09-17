@@ -1,0 +1,1719 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Speed40 configurator — demo</title>
+</head>
+<body>
+<style>
+  :root {
+    --bg: #F2F4F6;
+    --surface: #FFFFFF;
+    --surface-2: #E9EEF3;
+    --ink: #1B2833;
+    --muted: #5A6B78;
+    --line: #D6DEE5;
+    --accent: #2456A6;
+    --accent-soft: #E3EBF7;
+    --accent-ink: #FFFFFF;
+    --good: #1F7A4D;
+    --danger: #A8402F;
+    --shadow: 0 1px 3px rgba(27, 40, 51, 0.08);
+    --tek: #3A4B5A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121820;
+      --surface: #1B242E;
+      --surface-2: #232F3B;
+      --ink: #E7ECF1;
+      --muted: #93A3B0;
+      --line: #2D3946;
+      --accent: #6FA1E8;
+      --accent-soft: #223349;
+      --accent-ink: #0F1620;
+      --good: #5CC28E;
+      --danger: #E08A7A;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --tek: #93A3B0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121820;
+    --surface: #1B242E;
+    --surface-2: #232F3B;
+    --ink: #E7ECF1;
+    --muted: #93A3B0;
+    --line: #2D3946;
+    --accent: #6FA1E8;
+    --accent-soft: #223349;
+    --accent-ink: #0F1620;
+    --good: #5CC28E;
+    --danger: #E08A7A;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --tek: #93A3B0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 1140px; margin: 0 auto; padding: 0 16px 56px; }
+
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 20px 2px 14px;
+  }
+  .wordmark { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+  .wordmark span { color: var(--accent); }
+  .demo-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+    margin-bottom: 18px;
+    max-width: 680px;
+  }
+  .tabs button {
+    border: 0; background: transparent; color: var(--muted);
+    font: inherit; font-size: 0.9rem; font-weight: 600;
+    padding: 9px 4px; border-radius: 8px; cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tabs .telling { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }
+  .tabs button[aria-selected="true"] .telling { color: var(--accent); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .cats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cats button {
+    font: inherit; font-size: 0.92rem; font-weight: 600;
+    color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 16px; cursor: pointer;
+  }
+  .cats button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .cats button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .werkblad { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .werkblad { grid-template-columns: minmax(0, 1fr); } }
+
+  .groep + .groep { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .groep h2 { font-size: 0.98rem; font-weight: 700; margin: 0 0 4px; }
+  .groep .groep-uitleg { font-size: 0.85rem; color: var(--muted); margin: 0 0 14px; }
+  .velden { display: grid; gap: 16px; }
+
+  .veld-kop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .veld-naam { font-size: 0.86rem; font-weight: 600; }
+  .veld-waarde { font-size: 0.86rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  select, input[type="text"], input[type="email"], input[type="number"], input[type="password"], textarea {
+    width: 100%; font: inherit; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 9px; padding: 10px 11px;
+  }
+  textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; line-height: 1.5; }
+  select:focus, input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+  .keuzes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .keuzes button {
+    font: inherit; font-size: 0.88rem; font-weight: 600;
+    color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 9px;
+    padding: 8px 13px; cursor: pointer; text-align: left;
+  }
+  .keuzes button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .keuzes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .keuzes .meer { font-weight: 500; opacity: 0.75; font-variant-numeric: tabular-nums; }
+
+  .kleuren { display: flex; gap: 10px; flex-wrap: wrap; }
+  .kleuren button {
+    width: 46px; height: 46px; border-radius: 9px; cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.18); padding: 0;
+  }
+  .kleuren button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+  .kleuren button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .maat { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 12px; align-items: center; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .maat input[type="number"] { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  .schakel { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .schakel .om { display: flex; align-items: center; gap: 10px; }
+  .schakel input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+  aside.preview { position: sticky; top: 14px; display: grid; gap: 14px; }
+  @media (max-width: 900px) { aside.preview { position: static; } }
+  .tekening { background: var(--surface-2); border-radius: 10px; padding: 8px; }
+  .tekening svg { width: 100%; height: auto; display: block; }
+  .tekening-bijschrift { font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  .regels { font-size: 0.88rem; }
+  .regels div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; }
+  .regels .bedrag { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .regels .sub { color: var(--muted); }
+  .totaal {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--ink); font-weight: 700;
+  }
+  .totaal .val { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+  .btw-regel { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+  .aantal-rij { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; margin-top: 14px; }
+  .btn-primair {
+    font: inherit; font-size: 1rem; font-weight: 700;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 10px; padding: 13px 16px; cursor: pointer; width: 100%;
+  }
+  .btn-primair:disabled { opacity: 0.45; cursor: default; }
+  .btn-primair:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .btn-tweede {
+    font: inherit; font-size: 0.9rem; font-weight: 600;
+    background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; cursor: pointer;
+  }
+  .btn-tweede:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-tweede.mini { font-size: 0.8rem; padding: 5px 10px; margin-top: 8px; }
+  .knoprij { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .orderregel .omschrijving { font-weight: 600; }
+  .orderregel .code { font-size: 0.78rem; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .orderregel .kenmerken { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+  .orderregel input[type="number"] { width: 62px; padding: 6px; text-align: center; }
+  .wis {
+    border: 0; background: transparent; color: var(--muted);
+    font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 6px; border-radius: 6px;
+  }
+  .wis:hover { color: var(--danger); }
+  .wis:focus-visible { outline: 2px solid var(--accent); }
+
+  .leeg { text-align: center; color: var(--muted); padding: 32px 10px; font-size: 0.92rem; }
+  .rij-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 620px) { .rij-2 { grid-template-columns: 1fr; } }
+
+  .uitleg { font-size: 0.86rem; color: var(--muted); }
+  .uitleg code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+  .status { font-size: 0.88rem; font-weight: 600; padding: 10px 12px; border-radius: 9px; background: var(--surface-2); }
+  .status.ok { background: var(--accent-soft); color: var(--good); }
+  .status.fout { color: var(--danger); }
+
+  .log { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; line-height: 1.6; }
+  .log div { padding: 6px 0; border-bottom: 1px solid var(--line); white-space: pre-wrap; word-break: break-word; }
+  .log div:last-child { border-bottom: 0; }
+
+  .melding {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(18px);
+    background: var(--ink); color: var(--bg); font-weight: 600; font-size: 0.9rem;
+    padding: 11px 20px; border-radius: 999px; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s; z-index: 20;
+  }
+  .melding.zichtbaar { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (prefers-reduced-motion: reduce) { .melding { transition: none; } }
+
+  .scherm[hidden] { display: none; }
+  .tekst { max-width: 70ch; }
+  .tekst h3 { font-size: 0.98rem; margin: 22px 0 6px; }
+  .tekst h3:first-child { margin-top: 0; }
+  .tekst p { margin: 0 0 10px; }
+  .tekst ul { margin: 0 0 10px; padding-left: 20px; }
+  .tekst li { margin-bottom: 5px; }
+  .tekst code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  pre.json {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.76rem; line-height: 1.5; background: var(--surface-2);
+    padding: 14px; border-radius: 9px; overflow: auto; max-height: 420px; margin: 0;
+  }
+  .kop-rij { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .kop-rij h2 { font-size: 1rem; margin: 0; }
+  h2.blokkop { font-size: 1rem; margin: 0 0 12px; }
+  .stapel { display: grid; gap: 16px; }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="wordmark">Speed40 <span>configurator</span></div>
+    <div class="demo-badge">Demo, geen productiegegevens</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-scherm="configureren">Configureren</button>
+    <button role="tab" aria-selected="false" data-scherm="order">Order <span class="telling" id="order-telling"></span></button>
+    <button role="tab" aria-selected="false" data-scherm="koppeling">Speed40</button>
+    <button role="tab" aria-selected="false" data-scherm="opzet">Opzet</button>
+  </div>
+
+  <section class="scherm" id="scr-configureren">
+    <div class="cats" id="cats" role="group" aria-label="Productgroep"></div>
+    <div class="werkblad">
+      <div class="card" id="opties"></div>
+      <aside class="preview">
+        <div class="card">
+          <div class="tekening" id="tekening"></div>
+          <div class="tekening-bijschrift" id="tekening-bijschrift"></div>
+        </div>
+        <div class="card">
+          <div class="regels" id="prijsregels"></div>
+          <div class="totaal"><span>Per stuk, excl. btw</span><span class="val" id="stukprijs">&euro;0</span></div>
+          <div class="btw-regel"><span>Incl. 21% btw</span><span id="stukprijs-incl">&euro;0</span></div>
+          <div class="aantal-rij">
+            <div>
+              <label class="veld-naam" for="f-aantal">Aantal</label>
+              <input type="number" id="f-aantal" min="1" max="99" step="1" value="1">
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <button class="btn-primair" id="btn-toevoegen">Op de order</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="scherm" id="scr-order" hidden>
+    <div class="stapel">
+      <div class="card">
+        <div class="kop-rij">
+          <h2>Orderregels</h2>
+          <button class="btn-tweede" id="btn-order-leegmaken">Order leegmaken</button>
+        </div>
+        <div id="order-inhoud"></div>
+      </div>
+      <div class="card">
+        <h2 class="blokkop">Klant en levering</h2>
+        <div class="stapel">
+          <div class="rij-2">
+            <div>
+              <label class="veld-naam" for="k-naam">Naam</label>
+              <input type="text" id="k-naam" data-klant="naam" placeholder="Woonwinkel De Hoek">
+            </div>
+            <div>
+              <label class="veld-naam" for="k-nummer">Debiteurnummer</label>
+              <input type="text" id="k-nummer" data-klant="klantnummer" placeholder="10245">
+            </div>
+          </div>
+          <div class="rij-2">
+            <div>
+              <label class="veld-naam" for="k-email">E-mail</label>
+              <input type="email" id="k-email" data-klant="email" placeholder="inkoop@dehoek.nl">
+            </div>
+            <div>
+              <label class="veld-naam" for="k-tel">Telefoon</label>
+              <input type="text" id="k-tel" data-klant="telefoon" placeholder="040 123 45 67">
+            </div>
+          </div>
+          <div class="rij-2">
+            <div>
+              <label class="veld-naam" for="k-ref">Referentie van de klant</label>
+              <input type="text" id="k-ref" data-klant="referentie" placeholder="Offerte 2026-118">
+            </div>
+            <div>
+              <label class="veld-naam" for="k-week">Gewenste leverweek</label>
+              <input type="text" id="k-week" data-klant="leverweek" placeholder="2026-W41">
+            </div>
+          </div>
+          <div>
+            <label class="veld-naam" for="k-opm">Opmerking voor productie</label>
+            <textarea id="k-opm" data-klant="opmerking" rows="2" placeholder="Levering op de eerste verdieping, trap is smal."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scherm" id="scr-koppeling" hidden>
+    <div class="stapel">
+      <div class="card">
+        <h2 class="blokkop">Verbinding</h2>
+        <div class="stapel">
+          <div>
+            <label class="veld-naam" for="c-endpoint">Endpoint</label>
+            <input type="text" id="c-endpoint" placeholder="http://localhost:4040/speed40/v1/orders">
+            <p class="uitleg" style="margin:6px 0 0;">Wijst standaard naar de bridge uit <code>configurator/bridge.mjs</code>. Die draait lokaal, zet de sleutel erop en stuurt door naar Speed40.</p>
+          </div>
+          <div class="rij-2">
+            <div>
+              <label class="veld-naam" for="c-headernaam">Naam van de header</label>
+              <input type="text" id="c-headernaam" placeholder="X-Api-Key">
+            </div>
+            <div>
+              <label class="veld-naam" for="c-sleutel">Sleutel</label>
+              <input type="password" id="c-sleutel" autocomplete="off" placeholder="leeg laten bij gebruik van de bridge">
+            </div>
+          </div>
+          <div class="schakel">
+            <div class="om">
+              <input type="checkbox" id="c-testmodus">
+              <label for="c-testmodus"><span class="veld-naam">Testmodus</span><br><span class="uitleg">Geen verkeer naar buiten, de demo verzint zelf een ordernummer.</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kop-rij">
+          <h2>Payload</h2>
+          <button class="btn-tweede" id="btn-payload-vernieuwen">Opnieuw opbouwen</button>
+        </div>
+        <textarea id="c-payload" rows="18" spellcheck="false"></textarea>
+        <p class="uitleg" style="margin:8px 0 14px;">Je kunt de JSON hier aanpassen voor je hem verstuurt. Zolang je zelf typt blijft je versie staan, met de knop hierboven haal je de order opnieuw op.</p>
+        <div class="knoprij">
+          <button class="btn-primair" style="width:auto;" id="btn-versturen">Naar Speed40 sturen</button>
+          <button class="btn-tweede" id="btn-curl">curl kopi&euml;ren</button>
+          <button class="btn-tweede" id="btn-payload-kopieren">JSON kopi&euml;ren</button>
+        </div>
+        <div id="c-status" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="blokkop">Catalogus</h2>
+        <p class="uitleg" style="margin:0 0 12px;">De demo werkt met een ingebouwde catalogus. Haal je de artikelen en opties uit Speed40, dan laad je ze hier in en verandert het formulier mee.</p>
+        <div class="rij-2">
+          <div>
+            <label class="veld-naam" for="c-catalogus-url">Catalogus-URL</label>
+            <input type="text" id="c-catalogus-url" placeholder="http://localhost:4040/speed40/v1/catalogus">
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;">
+            <button class="btn-tweede" id="btn-catalogus-laden">Laden</button>
+            <button class="btn-tweede" id="btn-catalogus-export">Huidige catalogus opslaan</button>
+            <button class="btn-tweede" id="btn-catalogus-herstel">Terug naar demo</button>
+          </div>
+        </div>
+        <div id="c-catalogus-status" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="blokkop">Verkeer</h2>
+        <div class="log" id="c-log"><div class="leeg" style="padding:12px;">Nog niets verstuurd.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scherm" id="scr-opzet" hidden>
+    <div class="stapel">
+      <div class="card">
+        <div class="tekst">
+          <h3>Waar de producten vandaan komen</h3>
+          <p>In deze pagina staat geen enkel product. Het formulier, de tekening en de prijs komen allemaal uit een catalogusbestand met productgroepen, modellen en opties. In de demo zit dat bestand in de pagina zelf, in de praktijk haalt de configurator het op bij Speed40. Een model erbij is dan een record erbij, de pagina verandert niet mee.</p>
+          <p>De catalogus die nu geladen is heeft versie <strong id="opzet-versie"></strong>. Onder het kopje Catalogus in het Speed40-tabblad wissel je van bron en exporteer je de huidige catalogus als JSON, handig als startpunt voor de vulling in het ERP.</p>
+
+          <h3>Opties en hun soorten</h3>
+          <p>Elke optie in de catalogus heeft een soort. Die bepaalt hoe het veld eruitziet en hoe de prijs meetelt.</p>
+          <ul>
+            <li><code>maat</code> voor een schuifmaat met minimum, maximum en stapgrootte, bijvoorbeeld breedte in centimeters.</li>
+            <li><code>keuze</code> voor een lijst met varianten, elk met een eigen meerprijs of een factor op de materiaalprijs.</li>
+            <li><code>kleur</code> voor dezelfde lijst, maar getoond als staal met een hexwaarde die ook in de tekening terugkomt.</li>
+            <li><code>schakelaar</code> voor ja of nee, met een vaste meerprijs of een meerprijs per eenheid.</li>
+            <li><code>aantal</code> voor stuks, zoals legplanken of lades, met een prijs per stuk.</li>
+          </ul>
+
+          <h3>Hoe de prijs opgebouwd wordt</h3>
+          <p>Een productgroep rekent op breedte in centimeters of op oppervlakte in vierkante meters. Het model levert een basisbedrag plus een bedrag per eenheid. Daarna werken factoren zoals stofgroep of doeksoort op dat materiaalbedrag, en komen de toeslagen van de opties erbovenop. Die rekenregels staan in de catalogus als velden, niet in de code, dus een andere staffel of een prijsverhoging is een wijziging in de database.</p>
+          <p>Klantspecifieke prijzen horen aan de Speed40-kant. De configurator vraagt de catalogus op voor een debiteur, en krijgt dan de prijzen terug die voor die klant gelden. De pagina rekent alleen door wat hij binnenkrijgt.</p>
+
+          <h3>Afhankelijkheden tussen opties</h3>
+          <p>Niet elke optie hoort bij elk model. Met <code>alleenBijModel</code> verschijnt een optie alleen bij bepaalde artikelcodes, met <code>alleenBij</code> hangt hij aan de waarde van een andere optie, en met <code>bereikPerModel</code> krijgt een maat per model andere grenzen. Een dressoir loopt daardoor van 60 tot 120 cm hoog terwijl een schuifdeurkast op 180 begint, zonder dat er een tweede formulier nodig is.</p>
+
+          <h3>Van configuratie naar order</h3>
+          <p>Elke orderregel gaat mee met de artikelcode van het model en een lijst kenmerken. Een kenmerk heeft een code, een leesbare naam, een waardecode en een leesbare waarde. Speed40 kan op die codes matchen voor stuklijsten, inkoop en werkbonnen, terwijl dezelfde regel op een offerte of orderbevestiging leesbaar blijft. De configuratie krijgt een eigen id, zodat je later terug kunt zoeken hoe een regel tot stand kwam.</p>
+
+          <h3>Wat er in Speed40 hoort en wat hier</h3>
+          <p>In het ERP staan de artikelen, de optiecodes, de prijzen en staffels, de levertijden en de stuklijsten. Deze pagina is het formulier eromheen. Dat scheelt onderhoud, want een nieuwe stofcollectie of een prijswijziging wordt daar ingevoerd en de volgende keer dat de configurator de catalogus ophaalt staat het erin.</p>
+          <p>Voor meerdere merken of leveranciers werk je met meerdere productgroepen in dezelfde catalogus, of met een catalogus per merk achter een eigen URL. Voor meertaligheid krijgt het veld met de naam een variant per taal. De tekening is per productgroep één functie, dus een nieuwe groep die op een bestaande lijkt gebruikt een bestaande tekening.</p>
+
+          <h3>Techniek</h3>
+          <p>De pagina is één HTML-bestand zonder dependencies en draait op statische hosting. Het versturen gaat via de bridge uit <code>configurator/bridge.mjs</code>, een klein Node-script dat lokaal draait, de API-sleutel toevoegt en doorstuurt naar Speed40. Zo staat de sleutel niet in de browser en heb je geen last van CORS.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kop-rij">
+          <h2>Catalogusrecord van <span id="opzet-groepnaam"></span></h2>
+          <button class="btn-tweede" id="btn-opzet-kopieren">JSON kopi&euml;ren</button>
+        </div>
+        <p class="uitleg" style="margin:0 0 12px;">Dit is precies wat het formulier hiernaast opbouwt. Pas een veld aan in de database en het formulier verandert mee.</p>
+        <pre class="json" id="opzet-json"></pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="melding" id="melding" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   Catalogus
+
+   Alles wat de configurator toont komt hieruit: productgroepen, modellen,
+   opties, keuzes en prijsregels. Er staat geen product in de code zelf, dus
+   dezelfde pagina werkt op een catalogus die uit Speed40 komt. Zie README.md
+   in deze map voor de velden en de opbouw.
+------------------------------------------------------------------- */
+
+const DEMO_CATALOGUS = {
+  versie: "demo-2026-09",
+  herkomst: "Ingebouwde voorbeeldcatalogus",
+  btw: 21,
+  valuta: "EUR",
+  groepen: [
+    {
+      id: "bank",
+      naam: "Banken",
+      enkelvoud: "Bank",
+      tekening: "bank",
+      grondslag: "breedte",
+      modellen: [
+        { code: "BNK-LNG", naam: "Lounge", basis: 1290, perEenheid: 6.5, omschrijving: "Losse kussens, lage rug" },
+        { code: "BNK-MOD", naam: "Modulair", basis: 1690, perEenheid: 8.2, omschrijving: "Per element uit te breiden" },
+        { code: "BNK-KLS", naam: "Klassiek", basis: 1890, perEenheid: 7.4, omschrijving: "Gecapitonneerde rug, hoge zit" }
+      ],
+      opties: [
+        { id: "breedte", naam: "Breedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 140, max: 340, stap: 10, standaard: 220 },
+        { id: "diepte", naam: "Zitdiepte", groep: "Maatvoering", type: "keuze", standaard: "d100", keuzes: [
+          { code: "d90", naam: "90 cm", prijs: 0 },
+          { code: "d100", naam: "100 cm", prijs: 0 },
+          { code: "d110", naam: "110 cm", prijs: 95 }
+        ]},
+        { id: "opstelling", naam: "Opstelling", groep: "Maatvoering", type: "keuze", standaard: "recht", keuzes: [
+          { code: "recht", naam: "Rechte bank", prijs: 0 },
+          { code: "chaise-links", naam: "Chaise longue links", prijs: 320 },
+          { code: "chaise-rechts", naam: "Chaise longue rechts", prijs: 320 }
+        ]},
+        { id: "armleuning", naam: "Armleuning", groep: "Maatvoering", type: "keuze", standaard: "smal", keuzes: [
+          { code: "smal", naam: "Smal", prijs: 0 },
+          { code: "breed", naam: "Breed", prijs: 90 },
+          { code: "geen", naam: "Zonder", prijs: -60 }
+        ]},
+        { id: "stofgroep", naam: "Stofgroep", groep: "Bekleding", type: "keuze", standaard: "B", keuzes: [
+          { code: "A", naam: "Groep A", factor: 1 },
+          { code: "B", naam: "Groep B", factor: 1.12 },
+          { code: "C", naam: "Groep C", factor: 1.28 },
+          { code: "LDR", naam: "Leer", factor: 1.65 }
+        ]},
+        { id: "kleur", naam: "Kleur", groep: "Bekleding", type: "kleur", standaard: "zand", keuzes: [
+          { code: "zand", naam: "Zand", hex: "#D9CCB8" },
+          { code: "olijf", naam: "Olijf", hex: "#6E7A5C" },
+          { code: "antraciet", naam: "Antraciet", hex: "#3B4046" },
+          { code: "roest", naam: "Roest", hex: "#9C5A3C" },
+          { code: "ijsblauw", naam: "IJsblauw", hex: "#8FA3B8" },
+          { code: "krijt", naam: "Krijtwit", hex: "#E8E3DA" }
+        ]},
+        { id: "poten", naam: "Poten", groep: "Uitvoering", type: "keuze", standaard: "metaal", keuzes: [
+          { code: "metaal", naam: "Metaal zwart", prijs: 0 },
+          { code: "eiken", naam: "Eiken", prijs: 85 },
+          { code: "blok", naam: "Blokpoot", prijs: 45 }
+        ]},
+        { id: "rugverstelling", naam: "Verstelbare rug", groep: "Uitvoering", type: "schakelaar", prijs: 240, standaard: false },
+        { id: "slaapfunctie", naam: "Slaapfunctie", groep: "Uitvoering", type: "schakelaar", prijs: 420, standaard: false }
+      ]
+    },
+    {
+      id: "eettafel",
+      naam: "Eettafels",
+      enkelvoud: "Eettafel",
+      tekening: "tafel",
+      grondslag: "breedte",
+      modellen: [
+        { code: "TFL-BST", naam: "Boomstamblad", basis: 980, perEenheid: 9.2, omschrijving: "Massief eiken, 6 cm dik" },
+        { code: "TFL-STK", naam: "Strak blad", basis: 620, perEenheid: 5.4, omschrijving: "Fineer op onderconstructie" },
+        { code: "TFL-KER", naam: "Keramiek", basis: 1240, perEenheid: 11.5, omschrijving: "12 mm keramiek op stalen frame" }
+      ],
+      opties: [
+        { id: "breedte", naam: "Breedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 140, max: 320, stap: 10, standaard: 200 },
+        { id: "diepte", naam: "Diepte", groep: "Maatvoering", type: "keuze", standaard: "d100", keuzes: [
+          { code: "d90", naam: "90 cm", prijs: 0 },
+          { code: "d100", naam: "100 cm", prijs: 85 },
+          { code: "d110", naam: "110 cm", prijs: 150 }
+        ]},
+        { id: "rand", naam: "Randafwerking", groep: "Maatvoering", type: "keuze", standaard: "recht", keuzes: [
+          { code: "recht", naam: "Recht", prijs: 0 },
+          { code: "schuin", naam: "Schuin afgewerkt", prijs: 120 },
+          { code: "boomstam", naam: "Boomstamrand", prijs: 190 }
+        ]},
+        { id: "kleur", naam: "Kleur blad", groep: "Bekleding", type: "kleur", standaard: "naturel", keuzes: [
+          { code: "naturel", naam: "Naturel eiken", hex: "#C9A97B" },
+          { code: "gerookt", naam: "Gerookt", hex: "#8A6A4A" },
+          { code: "noten", naam: "Noten", hex: "#6B4A34" },
+          { code: "zwart", naam: "Zwart geolied", hex: "#3A3733" },
+          { code: "beton", naam: "Betonlook", hex: "#9A9A96" }
+        ]},
+        { id: "onderstel", naam: "Onderstel", groep: "Uitvoering", type: "keuze", standaard: "u-frame", keuzes: [
+          { code: "u-frame", naam: "U-frame", prijs: 0 },
+          { code: "matrix", naam: "Matrix", prijs: 180 },
+          { code: "spider", naam: "Spider", prijs: 260 },
+          { code: "x-poot", naam: "X-poot", prijs: 210 }
+        ]},
+        { id: "verlengbaar", naam: "Verlengbaar, 2 x 50 cm", groep: "Uitvoering", type: "schakelaar", prijs: 295, standaard: false },
+        { id: "beschermlaag", naam: "Beschermlaag", groep: "Uitvoering", type: "schakelaar", prijs: 85, standaard: false }
+      ]
+    },
+    {
+      id: "kast",
+      naam: "Kasten",
+      enkelvoud: "Kast",
+      tekening: "kast",
+      grondslag: "breedte",
+      modellen: [
+        { code: "KST-SCH", naam: "Schuifdeurkast", basis: 1150, perEenheid: 7.8, omschrijving: "Twee lopers, zachte aanslag" },
+        { code: "KST-DRA", naam: "Draaideurkast", basis: 890, perEenheid: 6.2, omschrijving: "Scharnieren met demping" },
+        { code: "KST-DRS", naam: "Dressoir", basis: 560, perEenheid: 4.6, omschrijving: "Lage kast, vrijstaand" }
+      ],
+      opties: [
+        { id: "breedte", naam: "Breedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 100, max: 400, stap: 10, standaard: 250,
+          bereikPerModel: { "KST-DRS": { min: 80, max: 280, standaard: 180 } } },
+        { id: "hoogte", naam: "Hoogte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 180, max: 280, stap: 5, standaard: 240,
+          bereikPerModel: { "KST-DRS": { min: 60, max: 120, stap: 5, standaard: 85 } } },
+        { id: "diepte", naam: "Diepte", groep: "Maatvoering", type: "keuze", standaard: "d60", keuzes: [
+          { code: "d40", naam: "40 cm", prijs: 0 },
+          { code: "d60", naam: "60 cm", prijs: 120 }
+        ]},
+        { id: "deuren", naam: "Aantal deuren", groep: "Maatvoering", type: "aantal", min: 2, max: 6, standaard: 3, prijs: 140 },
+        { id: "front", naam: "Front", groep: "Bekleding", type: "keuze", standaard: "melamine", keuzes: [
+          { code: "melamine", naam: "Melamine", prijs: 0 },
+          { code: "gelakt", naam: "Gelakt", prijsPerEenheid: 3.2 },
+          { code: "fineer", naam: "Fineer eiken", prijsPerEenheid: 5.4 }
+        ]},
+        { id: "kleur", naam: "Kleur front", groep: "Bekleding", type: "kleur", standaard: "wit", keuzes: [
+          { code: "wit", naam: "Wit", hex: "#E9E7E2" },
+          { code: "eiken", naam: "Eiken", hex: "#C9A97B" },
+          { code: "grijs", naam: "Stofgrijs", hex: "#8C8F92" },
+          { code: "groen", naam: "Diepgroen", hex: "#3F5647" },
+          { code: "zwart", naam: "Zwart", hex: "#333638" }
+        ]},
+        { id: "greep", naam: "Greep", groep: "Uitvoering", type: "keuze", standaard: "inkeping", keuzes: [
+          { code: "inkeping", naam: "Inkeping", prijs: 0 },
+          { code: "beugel", naam: "Beugel zwart", prijs: 45 },
+          { code: "push", naam: "Push to open", prijs: 120 }
+        ]},
+        { id: "legplanken", naam: "Legplanken", groep: "Indeling", type: "aantal", min: 1, max: 10, standaard: 4, prijs: 32 },
+        { id: "lades", naam: "Lades", groep: "Indeling", type: "aantal", min: 0, max: 6, standaard: 0, prijs: 95 },
+        { id: "roede", naam: "Hangroede", groep: "Indeling", type: "schakelaar", prijs: 65, standaard: true, alleenBijModel: ["KST-SCH", "KST-DRA"] },
+        { id: "verlichting", naam: "Ledverlichting", groep: "Indeling", type: "schakelaar", prijs: 180, standaard: false }
+      ]
+    },
+    {
+      id: "raamdecoratie",
+      naam: "Raamdecoratie",
+      enkelvoud: "Raamdecoratie",
+      tekening: "raam",
+      grondslag: "m2",
+      minimumEenheid: 0.6,
+      modellen: [
+        { code: "RAM-ROL", naam: "Rolgordijn", basis: 55, perEenheid: 74, omschrijving: "Cassette of open systeem" },
+        { code: "RAM-PLI", naam: "Plissé", basis: 85, perEenheid: 128, omschrijving: "Boven en onder verstelbaar" },
+        { code: "RAM-JAL", naam: "Houten jaloezie 50 mm", basis: 105, perEenheid: 158, omschrijving: "Lamellen van abachihout" },
+        { code: "RAM-VOU", naam: "Vouwgordijn", basis: 130, perEenheid: 172, omschrijving: "Gestikte banen, strijkvrij" }
+      ],
+      opties: [
+        { id: "breedte", naam: "Breedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 40, max: 300, stap: 1, standaard: 140 },
+        { id: "hoogte", naam: "Hoogte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 40, max: 320, stap: 1, standaard: 180 },
+        { id: "montage", naam: "Montage", groep: "Maatvoering", type: "keuze", standaard: "in-de-dag", keuzes: [
+          { code: "in-de-dag", naam: "In de dag", prijs: 0 },
+          { code: "op-de-dag", naam: "Op de dag", prijs: 0 }
+        ]},
+        { id: "doek", naam: "Doek", groep: "Bekleding", type: "keuze", standaard: "licht", keuzes: [
+          { code: "transparant", naam: "Transparant", factor: 1 },
+          { code: "licht", naam: "Lichtdoorlatend", factor: 1.08 },
+          { code: "verduister", naam: "Verduisterend", factor: 1.24 }
+        ]},
+        { id: "kleur", naam: "Kleur", groep: "Bekleding", type: "kleur", standaard: "linnen", keuzes: [
+          { code: "linnen", naam: "Linnen", hex: "#DCD3C4" },
+          { code: "wit", naam: "Wit", hex: "#F0EEE9" },
+          { code: "taupe", naam: "Taupe", hex: "#A99787" },
+          { code: "grijs", naam: "Grijs", hex: "#8D9296" },
+          { code: "hout", naam: "Houtnerf", hex: "#B08A5E" }
+        ]},
+        { id: "bediening", naam: "Bediening", groep: "Uitvoering", type: "keuze", standaard: "ketting-rechts", keuzes: [
+          { code: "ketting-links", naam: "Ketting links", prijs: 0 },
+          { code: "ketting-rechts", naam: "Ketting rechts", prijs: 0 },
+          { code: "koord", naam: "Koord", prijs: 15 },
+          { code: "motor", naam: "Motor met afstandsbediening", prijs: 210 },
+          { code: "motor-app", naam: "Motor met app en tijdschema", prijs: 295 }
+        ]},
+        { id: "cassette", naam: "Cassette", groep: "Uitvoering", type: "schakelaar", prijs: 58, standaard: false },
+        { id: "inmeten", naam: "Inmeetservice", groep: "Uitvoering", type: "schakelaar", prijs: 45, standaard: false }
+      ]
+    }
+  ]
+};
+</script>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   Staat en opslag
+------------------------------------------------------------------- */
+
+const OPSLAG = "speed40-configurator-v1";
+const SLEUTEL_OPSLAG = "speed40-configurator-sleutel";
+
+let catalogus = kopie(DEMO_CATALOGUS);
+
+const staat = {
+  groepId: catalogus.groepen[0].id,
+  configs: {},
+  aantal: 1,
+  order: [],
+  klant: { naam: "", klantnummer: "", email: "", telefoon: "", referentie: "", leverweek: "", opmerking: "" },
+  koppeling: {
+    endpoint: "http://localhost:4040/speed40/v1/orders",
+    headernaam: "X-Api-Key",
+    testmodus: true,
+    catalogusUrl: "http://localhost:4040/speed40/v1/catalogus"
+  },
+  sleutel: "",
+  payloadAangepast: false,
+  log: []
+};
+
+function kopie(o) { return JSON.parse(JSON.stringify(o)); }
+const $ = (s) => document.querySelector(s);
+
+function euro(n) {
+  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: catalogus.valuta || "EUR", minimumFractionDigits: 2 }).format(n || 0);
+}
+function getal(n, decimalen) {
+  return new Intl.NumberFormat("nl-NL", { minimumFractionDigits: decimalen || 0, maximumFractionDigits: decimalen || 0 }).format(n);
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function afronden(n) { return Math.round(n * 100) / 100; }
+
+/* ------------------------------------------------------------------
+   Catalogus uitlezen
+------------------------------------------------------------------- */
+
+function groepVan(id) { return catalogus.groepen.find((g) => g.id === id) || catalogus.groepen[0]; }
+function huidigeGroep() { return groepVan(staat.groepId); }
+function modelVan(groep, code) { return groep.modellen.find((m) => m.code === code) || groep.modellen[0]; }
+function keuzeVan(optie, code) { return (optie.keuzes || []).find((k) => k.code === code) || (optie.keuzes || [])[0]; }
+
+function bereikVan(optie, cfg) {
+  const over = optie.bereikPerModel && optie.bereikPerModel[cfg.model];
+  return {
+    min: over && over.min != null ? over.min : optie.min,
+    max: over && over.max != null ? over.max : optie.max,
+    stap: over && over.stap != null ? over.stap : (optie.stap || 1),
+    standaard: over && over.standaard != null ? over.standaard : optie.standaard
+  };
+}
+
+function zichtbaar(optie, cfg) {
+  if (optie.alleenBijModel && optie.alleenBijModel.indexOf(cfg.model) === -1) return false;
+  if (optie.alleenBij) {
+    for (const sleutel in optie.alleenBij) {
+      const toegestaan = [].concat(optie.alleenBij[sleutel]);
+      if (toegestaan.indexOf(cfg[sleutel]) === -1) return false;
+    }
+  }
+  return true;
+}
+
+function standaardConfig(groep) {
+  const cfg = { model: groep.modellen[0].code };
+  groep.opties.forEach((o) => {
+    if (o.type === "keuze" || o.type === "kleur") cfg[o.id] = o.standaard != null ? o.standaard : o.keuzes[0].code;
+    else if (o.type === "schakelaar") cfg[o.id] = !!o.standaard;
+    else cfg[o.id] = bereikVan(o, cfg).standaard;
+  });
+  return cfg;
+}
+
+function configVan(groep) {
+  if (!staat.configs[groep.id]) staat.configs[groep.id] = standaardConfig(groep);
+  return staat.configs[groep.id];
+}
+
+function configOpschonen(groep, cfg) {
+  if (!groep.modellen.some((m) => m.code === cfg.model)) cfg.model = groep.modellen[0].code;
+  groep.opties.forEach((o) => {
+    if (o.type === "maat") {
+      const b = bereikVan(o, cfg);
+      if (cfg[o.id] == null) cfg[o.id] = b.standaard;
+      cfg[o.id] = Math.min(b.max, Math.max(b.min, Math.round(cfg[o.id] / b.stap) * b.stap));
+    } else if (o.type === "aantal") {
+      const b = bereikVan(o, cfg);
+      if (cfg[o.id] == null) cfg[o.id] = b.standaard;
+      cfg[o.id] = Math.min(b.max, Math.max(b.min, Math.round(cfg[o.id])));
+    } else if (o.type === "schakelaar") {
+      if (cfg[o.id] == null) cfg[o.id] = !!o.standaard;
+    } else if (!keuzeVan(o, cfg[o.id]) || cfg[o.id] == null) {
+      cfg[o.id] = o.standaard != null ? o.standaard : o.keuzes[0].code;
+    }
+  });
+  return cfg;
+}
+
+/* ------------------------------------------------------------------
+   Prijsopbouw
+
+   1. Grondslag: breedte in cm of oppervlakte in m2.
+   2. Materiaal: basisprijs van het model plus de prijs per eenheid.
+   3. Factoren (stofgroep, doeksoort) werken op het materiaal.
+   4. Toeslagen van opties komen daarna, vast of per eenheid.
+------------------------------------------------------------------- */
+
+function eenheidVan(groep, cfg) {
+  if (groep.grondslag === "m2") {
+    const opp = ((cfg.breedte || 0) * (cfg.hoogte || 0)) / 10000;
+    return Math.max(groep.minimumEenheid || 0, afronden(opp));
+  }
+  return cfg[groep.grondslagVeld || "breedte"] || 0;
+}
+
+function eenheidLabel(groep, eenheid) {
+  return groep.grondslag === "m2" ? getal(eenheid, 2) + " m2" : getal(eenheid, 0) + " cm";
+}
+
+function bereken(groep, cfg) {
+  const model = modelVan(groep, cfg.model);
+  const eenheid = eenheidVan(groep, cfg);
+  const regels = [];
+
+  let materiaal = (model.basis || 0) + (model.perEenheid || 0) * eenheid;
+  regels.push({ label: model.naam + ", " + eenheidLabel(groep, eenheid), bedrag: materiaal });
+
+  let toeslagen = 0;
+  groep.opties.forEach((o) => {
+    if (!zichtbaar(o, cfg)) return;
+    if (o.type === "keuze" || o.type === "kleur") {
+      const k = keuzeVan(o, cfg[o.id]);
+      if (!k) return;
+      if (k.factor && k.factor !== 1) {
+        const delta = materiaal * (k.factor - 1);
+        materiaal += delta;
+        regels.push({ label: o.naam + ", " + k.naam, bedrag: delta, sub: true });
+      } else if (k.prijsPerEenheid) {
+        const bedrag = k.prijsPerEenheid * eenheid;
+        toeslagen += bedrag;
+        regels.push({ label: o.naam + ", " + k.naam, bedrag: bedrag, sub: true });
+      } else if (k.prijs) {
+        toeslagen += k.prijs;
+        regels.push({ label: o.naam + ", " + k.naam, bedrag: k.prijs, sub: true });
+      }
+    } else if (o.type === "schakelaar" && cfg[o.id]) {
+      const bedrag = o.prijsPerEenheid ? o.prijsPerEenheid * eenheid : (o.prijs || 0);
+      if (bedrag) {
+        toeslagen += bedrag;
+        regels.push({ label: o.naam, bedrag: bedrag, sub: true });
+      }
+    } else if (o.type === "aantal") {
+      const stuks = cfg[o.id] || 0;
+      const gratis = o.gratisTot != null ? o.gratisTot : 0;
+      const belast = Math.max(0, stuks - gratis);
+      const bedrag = belast * (o.prijs || 0);
+      if (bedrag) {
+        toeslagen += bedrag;
+        regels.push({ label: o.naam + ", " + stuks + " stuks", bedrag: bedrag, sub: true });
+      }
+    }
+  });
+
+  return { eenheid: eenheid, regels: regels, materiaal: materiaal, perStuk: afronden(materiaal + toeslagen) };
+}
+
+function kenmerkenVan(groep, cfg) {
+  const uit = [];
+  groep.opties.forEach((o) => {
+    if (!zichtbaar(o, cfg)) return;
+    if (o.type === "keuze" || o.type === "kleur") {
+      const k = keuzeVan(o, cfg[o.id]);
+      if (k) uit.push({ code: o.id, naam: o.naam, waarde_code: k.code, waarde: k.naam });
+    } else if (o.type === "schakelaar") {
+      uit.push({ code: o.id, naam: o.naam, waarde_code: cfg[o.id] ? "ja" : "nee", waarde: cfg[o.id] ? "Ja" : "Nee" });
+    } else if (o.type === "maat") {
+      uit.push({ code: o.id, naam: o.naam, waarde_code: String(cfg[o.id]), waarde: cfg[o.id] + " " + (o.eenheid || ""), eenheid: o.eenheid || "" });
+    } else {
+      uit.push({ code: o.id, naam: o.naam, waarde_code: String(cfg[o.id]), waarde: String(cfg[o.id]), eenheid: "stuks" });
+    }
+  });
+  return uit;
+}
+
+function omschrijvingVan(groep, cfg) {
+  const model = modelVan(groep, cfg.model);
+  const maten = [];
+  groep.opties.forEach((o) => { if (o.type === "maat" && zichtbaar(o, cfg)) maten.push(cfg[o.id]); });
+  const maat = maten.length ? maten.join(" x ") + " cm" : "";
+  return [groep.enkelvoud || groep.naam, model.naam, maat].filter(Boolean).join(", ");
+}
+</script>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   Tekeningen
+
+   Elke productgroep wijst met het veld "tekening" naar een functie
+   hieronder. De maten uit de configuratie zijn ook de maten van de
+   tekening, zodat een bank van 340 cm er breder uitziet dan een van 160.
+------------------------------------------------------------------- */
+
+function hexNaarRgb(hex) {
+  const h = String(hex || "#CCCCCC").replace("#", "");
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+}
+function mengen(hex, factor) {
+  const rgb = hexNaarRgb(hex).map((c) => Math.max(0, Math.min(255, Math.round(factor < 1 ? c * factor : c + (255 - c) * (factor - 1)))));
+  return "rgb(" + rgb.join(",") + ")";
+}
+function kleurVan(groep, cfg) {
+  const optie = groep.opties.find((o) => o.type === "kleur");
+  if (!optie) return "#C8CCD0";
+  const k = keuzeVan(optie, cfg[optie.id]);
+  return (k && k.hex) || "#C8CCD0";
+}
+function rect(x, y, w, h, fill, extra) {
+  return '<rect x="' + x + '" y="' + y + '" width="' + Math.max(0, w) + '" height="' + Math.max(0, h) + '" fill="' + fill + '"' + (extra || "") + "/>";
+}
+function lijn(x1, y1, x2, y2, extra) {
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="currentColor" stroke-width="0.8"' + (extra || "") + "/>";
+}
+
+function tekenBank(groep, cfg) {
+  const B = cfg.breedte;
+  const arm = cfg.armleuning === "breed" ? 26 : cfg.armleuning === "geen" ? 0 : 14;
+  const ph = cfg.poten === "blok" ? 8 : cfg.poten === "eiken" ? 16 : 14;
+  const rugH = cfg.model === "BNK-KLS" ? 50 : 43;
+  const H = rugH + 45;
+  const kleur = kleurVan(groep, cfg);
+  const rugKleur = mengen(kleur, 0.82);
+  const armKleur = mengen(kleur, 0.9);
+  const basisKleur = mengen(kleur, 0.68);
+  const chaise = cfg.opstelling !== "recht" ? Math.min(100, Math.max(70, Math.round(B * 0.33))) : 0;
+  const chaiseLinks = cfg.opstelling === "chaise-links";
+  const rugVan = chaise && chaiseLinks ? chaise : 0;
+  const rugTot = chaise && !chaiseLinks ? B - chaise : B;
+  const zitTop = rugH;
+  let s = "";
+
+  s += rect(2, zitTop + 20, B - 4, H - zitTop - 20, basisKleur, ' rx="1.5"');
+  s += rect(rugVan, 0, rugTot - rugVan, zitTop + 18, rugKleur, ' rx="2.5"');
+
+  const zitVan = chaise && chaiseLinks ? 0 : arm;
+  const zitTot = chaise && !chaiseLinks ? B : B - arm;
+  const vakken = [];
+  if (chaise) {
+    const rest = chaise && chaiseLinks ? [chaise, zitTot] : [zitVan, B - chaise];
+    const restB = rest[1] - rest[0];
+    const n = Math.max(1, Math.min(4, Math.round(restB / 70)));
+    if (chaiseLinks) vakken.push([0, chaise]);
+    for (let i = 0; i < n; i++) vakken.push([rest[0] + (restB / n) * i, rest[0] + (restB / n) * (i + 1)]);
+    if (!chaiseLinks) vakken.push([B - chaise, B]);
+  } else {
+    const n = Math.max(2, Math.min(5, Math.round((zitTot - zitVan) / 70)));
+    for (let i = 0; i < n; i++) vakken.push([zitVan + ((zitTot - zitVan) / n) * i, zitVan + ((zitTot - zitVan) / n) * (i + 1)]);
+  }
+  vakken.forEach((v) => {
+    s += rect(v[0] + 1, zitTop - 3, v[1] - v[0] - 2, 24, kleur, ' rx="3" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"');
+  });
+
+  const rugVakken = vakken.filter((v) => v[0] >= rugVan - 1 && v[1] <= rugTot + 1);
+  rugVakken.forEach((v) => {
+    const kleurRug = cfg.model === "BNK-KLS" ? mengen(kleur, 1.04) : mengen(kleur, 1.08);
+    s += rect(v[0] + 2, 4, v[1] - v[0] - 4, zitTop - 9, kleurRug, ' rx="3" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.3"');
+    if (cfg.model === "BNK-KLS") {
+      for (let i = 1; i < 3; i++) s += lijn(v[0] + 4, 4 + ((zitTop - 9) / 3) * i, v[1] - v[0] + v[0] - 4, 4 + ((zitTop - 9) / 3) * i, ' stroke-opacity="0.3"');
+    }
+  });
+  if (cfg.rugverstelling && rugVakken.length) {
+    const v = rugVakken[rugVakken.length - 1];
+    s += '<path d="M' + (v[1] - 12) + ' 2 q 6 -3 10 2" fill="none" stroke="currentColor" stroke-width="1.2"/>';
+  }
+
+  if (arm) {
+    s += rect(0, 6, arm, H - 6, armKleur, ' rx="3" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"');
+    s += rect(B - arm, 6, arm, H - 6, armKleur, ' rx="3" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"');
+  }
+  if (cfg.slaapfunctie) s += lijn(B / 2 - 10, H - 6, B / 2 + 10, H - 6, ' stroke-width="1.4" stroke-opacity="0.6"');
+
+  const potKleur = cfg.poten === "eiken" ? "#C9A97B" : cfg.poten === "blok" ? mengen(kleur, 0.55) : "#333638";
+  if (cfg.poten === "blok") {
+    s += rect(8, H, B - 16, ph, potKleur, ' rx="1"');
+  } else {
+    s += rect(10, H, 6, ph, potKleur, ' rx="1"');
+    s += rect(B - 16, H, 6, ph, potKleur, ' rx="1"');
+    if (B > 220) s += rect(B / 2 - 3, H, 6, ph, potKleur, ' rx="1"');
+  }
+  return { w: B, h: H + ph, body: s, maatB: cfg.breedte + " cm", maatH: null };
+}
+
+function tekenTafel(groep, cfg) {
+  const B = cfg.breedte;
+  const dik = cfg.model === "TFL-BST" ? 6 : cfg.model === "TFL-KER" ? 2.4 : 4;
+  const H = 76;
+  const kleur = kleurVan(groep, cfg);
+  const frame = "#3A3D40";
+  let s = "";
+
+  if (cfg.verlengbaar) {
+    s += rect(-50, 0, 50, dik, mengen(kleur, 1.08), ' stroke="currentColor" stroke-dasharray="3 3" stroke-width="0.7" stroke-opacity="0.6"');
+    s += rect(B, 0, 50, dik, mengen(kleur, 1.08), ' stroke="currentColor" stroke-dasharray="3 3" stroke-width="0.7" stroke-opacity="0.6"');
+  }
+  s += rect(0, 0, B, dik, kleur, ' rx="0.8"');
+  if (cfg.rand === "boomstam") {
+    s += '<path d="M0 ' + dik + " Q " + B * 0.25 + " " + (dik + 2.5) + " " + B * 0.5 + " " + dik + " T " + B + " " + dik + '" fill="none" stroke="' + mengen(kleur, 0.75) + '" stroke-width="1.4"/>';
+  } else if (cfg.rand === "schuin") {
+    s += lijn(0, dik * 0.4, B, dik * 0.4, ' stroke-opacity="0.35"');
+  }
+
+  const l = 10, r = B - 10;
+  if (cfg.onderstel === "u-frame") {
+    s += rect(l + 8, dik, 4, H - dik, frame);
+    s += rect(r - 12, dik, 4, H - dik, frame);
+    s += rect(l, H - 4, 26, 4, frame);
+    s += rect(r - 26, H - 4, 26, 4, frame);
+  } else if (cfg.onderstel === "matrix") {
+    [l + 10, r - 10].forEach((x) => {
+      s += rect(x - 14, dik, 28, H - dik, "none", ' stroke="' + frame + '" stroke-width="2.6"');
+      s += lijn(x - 14, (H + dik) / 2, x + 14, (H + dik) / 2, ' stroke="' + frame + '" stroke-width="2.2"');
+      s += lijn(x, dik, x, H, ' stroke="' + frame + '" stroke-width="2.2"');
+    });
+  } else if (cfg.onderstel === "spider") {
+    [B * 0.28, B * 0.72].forEach((x) => {
+      s += '<path d="M' + x + " " + dik + " L " + (x - 20) + " " + H + " M" + x + " " + dik + " L " + (x + 20) + " " + H + '" stroke="' + frame + '" stroke-width="2.6" fill="none"/>';
+    });
+  } else {
+    [l + 22, r - 22].forEach((x) => {
+      s += '<path d="M' + (x - 20) + " " + dik + " L " + (x + 20) + " " + H + " M" + (x + 20) + " " + dik + " L " + (x - 20) + " " + H + '" stroke="' + frame + '" stroke-width="2.6" fill="none"/>';
+    });
+  }
+  return { w: B, h: H, body: s, maatB: cfg.breedte + " cm", maatH: "76 cm" };
+}
+
+function tekenKast(groep, cfg) {
+  const B = cfg.breedte, H = cfg.hoogte;
+  const plint = cfg.model === "KST-DRS" ? 12 : 6;
+  const n = Math.max(1, cfg.deuren || 2);
+  const kleur = kleurVan(groep, cfg);
+  const korpus = mengen(kleur, 0.55);
+  const binnen = mengen(kleur, 0.42);
+  let s = "";
+
+  s += rect(0, 0, B, H, korpus);
+  s += rect(0, H - plint, B, plint, mengen(kleur, 0.4));
+  const vakB = B / n;
+  const body = H - plint;
+
+  for (let i = 0; i < n; i++) {
+    const x = i * vakB + 0.8;
+    const w = vakB - 1.6;
+    if (i === n - 1) {
+      s += rect(x, 1, w, body - 2, binnen);
+      const lades = cfg.lades || 0;
+      let onder = body - 2;
+      for (let j = 0; j < lades; j++) {
+        const lh = Math.min(20, (body - 10) / Math.max(4, lades));
+        onder -= lh + 1;
+        s += rect(x + 2, onder, w - 4, lh, mengen(kleur, 0.95), ' rx="0.8"');
+        s += lijn(x + w / 2 - 6, onder + lh / 2, x + w / 2 + 6, onder + lh / 2, ' stroke-width="1.4" stroke-opacity="0.7"');
+      }
+      const planken = cfg.legplanken || 0;
+      const ruimte = onder - (cfg.roede ? 26 : 6);
+      for (let j = 1; j <= planken; j++) {
+        const y = 6 + (ruimte / (planken + 1)) * j + (cfg.roede ? 22 : 0);
+        if (y < onder - 4) s += rect(x + 2, y, w - 4, 1.6, mengen(kleur, 0.85));
+      }
+      if (cfg.roede && zichtbaar(groep.opties.find((o) => o.id === "roede") || {}, cfg)) {
+        s += lijn(x + 3, 14, x + w - 3, 14, ' stroke-width="1.6"');
+        for (let j = 0; j < Math.max(2, Math.round(w / 18)); j++) {
+          const hx = x + 6 + j * ((w - 12) / Math.max(1, Math.round(w / 18) - 1 || 1));
+          s += '<path d="M' + hx + ' 14 l 0 6 m -3 0 l 6 0" stroke="currentColor" stroke-width="1" fill="none" stroke-opacity="0.75"/>';
+        }
+      }
+      if (cfg.verlichting) s += rect(x + 2, 2, w - 4, 2, "#F2D98B");
+    } else {
+      s += rect(x, 1, w, body - 2, kleur, ' rx="0.6"');
+      if (cfg.greep === "beugel") s += rect(x + w - 8, body * 0.45, 4, 16, "#333638", ' rx="1.5"');
+      else if (cfg.greep === "inkeping") s += rect(x + 3, 2, w - 6, 2, mengen(kleur, 0.7));
+      if (cfg.model === "KST-SCH" && i === 0) s += lijn(x, 3, x + w, 3, ' stroke-opacity="0.5"');
+    }
+  }
+  s += rect(0, 0, B, H, "none", ' stroke="currentColor" stroke-width="0.9"');
+  return { w: B, h: H, body: s, maatB: cfg.breedte + " cm", maatH: cfg.hoogte + " cm" };
+}
+
+function tekenRaam(groep, cfg) {
+  const B = cfg.breedte, H = cfg.hoogte;
+  const kleur = kleurVan(groep, cfg);
+  const opDeDag = cfg.montage === "op-de-dag";
+  const marge = opDeDag ? 10 : 0;
+  let s = "";
+
+  s += rect(-8, -8, B + 16, H + 16, "none", ' stroke="currentColor" stroke-width="1.2" stroke-opacity="0.5"');
+  s += rect(0, 0, B, H, "#D7E2EA");
+  s += lijn(0, H * 0.5, B, H * 0.5, ' stroke-opacity="0.35"');
+  s += lijn(B * 0.5, 0, B * 0.5, H, ' stroke-opacity="0.35"');
+
+  const x0 = -marge, bw = B + marge * 2;
+  const cassette = cfg.cassette ? 8 : 0;
+  if (cassette) s += rect(x0, -marge, bw, cassette, mengen(kleur, 0.7), ' rx="1"');
+  const top = -marge + cassette;
+
+  if (cfg.model === "RAM-JAL") {
+    const lamel = 5;
+    for (let y = top; y < H + marge - lamel; y += lamel + 0.8) {
+      s += rect(x0, y, bw, lamel, kleur, ' rx="0.6"');
+      s += lijn(x0, y + lamel, x0 + bw, y + lamel, ' stroke-opacity="0.25"');
+    }
+    s += lijn(x0 + bw * 0.2, top, x0 + bw * 0.2, H + marge, ' stroke-opacity="0.5"');
+    s += lijn(x0 + bw * 0.8, top, x0 + bw * 0.8, H + marge, ' stroke-opacity="0.5"');
+  } else if (cfg.model === "RAM-PLI") {
+    const tot = top + (H + marge - top) * 0.58;
+    s += rect(x0, top, bw, tot - top, mengen(kleur, 1.02));
+    for (let y = top + 3; y < tot; y += 3.2) s += lijn(x0, y, x0 + bw, y, ' stroke-opacity="0.4"');
+    s += rect(x0, tot, bw, 2.5, mengen(kleur, 0.65), ' rx="1"');
+  } else if (cfg.model === "RAM-VOU") {
+    const tot = top + (H + marge - top) * 0.48;
+    s += rect(x0, top, bw, tot - top, kleur);
+    for (let i = 1; i <= 3; i++) {
+      const y = tot - i * ((tot - top) / 4);
+      s += '<path d="M' + x0 + " " + y + " Q " + (x0 + bw / 2) + " " + (y + 4) + " " + (x0 + bw) + " " + y + '" fill="none" stroke="' + mengen(kleur, 0.7) + '" stroke-width="1.2"/>';
+    }
+    s += rect(x0, tot, bw, 2, mengen(kleur, 0.7));
+  } else {
+    const tot = top + (H + marge - top) * 0.62;
+    if (!cassette) s += rect(x0, top, bw, 5, mengen(kleur, 0.7), ' rx="2.5"');
+    s += rect(x0, top + (cassette ? 0 : 5), bw, tot - top, kleur);
+    s += rect(x0, tot, bw, 3, mengen(kleur, 0.6), ' rx="1"');
+  }
+
+  if (cfg.bediening === "motor" || cfg.bediening === "motor-app") {
+    s += rect(x0 + bw - 14, top - 1, 12, 7, "#333638", ' rx="1"');
+    s += '<text x="' + (x0 + bw - 8) + '" y="' + (top + 4.6) + '" font-size="5" fill="#FFFFFF" text-anchor="middle" font-family="sans-serif">M</text>';
+  } else {
+    const kx = cfg.bediening === "ketting-links" ? x0 + 3 : x0 + bw - 3;
+    s += lijn(kx, top + 2, kx, Math.min(H + marge, top + (H + marge - top) * 0.7), ' stroke-dasharray="2 2"');
+  }
+  return { w: B, h: H, body: s, maatB: cfg.breedte + " cm", maatH: cfg.hoogte + " cm", offsetX: 12, offsetY: 12 };
+}
+
+const TEKENINGEN = { bank: tekenBank, tafel: tekenTafel, kast: tekenKast, raam: tekenRaam };
+
+function tekening(groep, cfg) {
+  const fn = TEKENINGEN[groep.tekening] || tekenKast;
+  const t = fn(groep, cfg);
+  const ml = 34, mr = 16 + (t.offsetX || 0), mt = 16 + (t.offsetY || 0), mb = 32;
+  const vbW = t.w + ml + mr, vbH = t.h + mt + mb;
+  let maten = "";
+  if (t.maatB) {
+    const y = t.h + 16;
+    maten += lijn(0, y, t.w, y);
+    maten += lijn(0, y - 3, 0, y + 3) + lijn(t.w, y - 3, t.w, y + 3);
+    maten += '<text x="' + t.w / 2 + '" y="' + (y + 11) + '" font-size="9" fill="currentColor" text-anchor="middle" font-family="sans-serif">' + esc(t.maatB) + "</text>";
+  }
+  if (t.maatH) {
+    const x = -18;
+    maten += lijn(x, 0, x, t.h);
+    maten += lijn(x - 3, 0, x + 3, 0) + lijn(x - 3, t.h, x + 3, t.h);
+    maten += '<text transform="translate(' + (x - 5) + "," + t.h / 2 + ') rotate(-90)" font-size="9" fill="currentColor" text-anchor="middle" font-family="sans-serif">' + esc(t.maatH) + "</text>";
+  }
+  return '<svg viewBox="0 0 ' + vbW + " " + vbH + '" style="color: var(--tek)" role="img" aria-label="Tekening van de configuratie">' +
+    '<g transform="translate(' + ml + "," + mt + ')">' + t.body + maten + "</g></svg>";
+}
+</script>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   Formulier opbouwen uit de catalogus
+------------------------------------------------------------------- */
+
+function renderCats() {
+  $("#cats").innerHTML = catalogus.groepen.map((g) =>
+    '<button type="button" data-groep="' + esc(g.id) + '" aria-pressed="' + (g.id === staat.groepId) + '">' + esc(g.naam) + "</button>"
+  ).join("");
+}
+
+function renderOpties() {
+  const groep = huidigeGroep();
+  const cfg = configOpschonen(groep, configVan(groep));
+  let h = '<div class="groep"><h2>Model</h2><p class="groep-uitleg">' + esc(groep.naam) + " uit de catalogus, versie " + esc(catalogus.versie) + '.</p><div class="keuzes">';
+  h += groep.modellen.map((m) =>
+    '<button type="button" data-veld="model" data-waarde="' + esc(m.code) + '" aria-pressed="' + (m.code === cfg.model) + '">' +
+    esc(m.naam) + (m.omschrijving ? '<br><span class="meer">' + esc(m.omschrijving) + "</span>" : "") + "</button>"
+  ).join("");
+  h += "</div></div>";
+
+  const groepen = [];
+  groep.opties.forEach((o) => {
+    if (!zichtbaar(o, cfg)) return;
+    const naam = o.groep || "Opties";
+    let g = groepen.find((x) => x.naam === naam);
+    if (!g) { g = { naam: naam, opties: [] }; groepen.push(g); }
+    g.opties.push(o);
+  });
+
+  groepen.forEach((g) => {
+    h += '<div class="groep"><h2>' + esc(g.naam) + '</h2><div class="velden">';
+    g.opties.forEach((o) => { h += veldHtml(o, cfg, groep); });
+    h += "</div></div>";
+  });
+
+  $("#opties").innerHTML = h;
+}
+
+function meerprijsLabel(k, groep, cfg) {
+  if (k.factor && k.factor !== 1) return "+" + Math.round((k.factor - 1) * 100) + "%";
+  if (k.prijsPerEenheid) return "+" + euro(k.prijsPerEenheid * eenheidVan(groep, cfg));
+  if (k.prijs) return (k.prijs > 0 ? "+" : "") + euro(k.prijs);
+  return "";
+}
+
+function veldHtml(o, cfg, groep) {
+  let h = '<div class="veld" data-optie="' + esc(o.id) + '">';
+  if (o.type === "maat") {
+    const b = bereikVan(o, cfg);
+    h += '<div class="veld-kop"><label class="veld-naam" for="opt-' + esc(o.id) + '">' + esc(o.naam) + '</label>' +
+      '<span class="veld-waarde">' + b.min + " tot " + b.max + " " + esc(o.eenheid || "") + "</span></div>";
+    h += '<div class="maat"><input type="range" id="opt-' + esc(o.id) + '" data-veld="' + esc(o.id) + '" data-soort="maat" min="' + b.min + '" max="' + b.max + '" step="' + b.stap + '" value="' + cfg[o.id] + '">' +
+      '<input type="number" data-veld="' + esc(o.id) + '" data-soort="maat" min="' + b.min + '" max="' + b.max + '" step="' + b.stap + '" value="' + cfg[o.id] + '"></div>';
+  } else if (o.type === "aantal") {
+    const b = bereikVan(o, cfg);
+    h += '<div class="veld-kop"><label class="veld-naam" for="opt-' + esc(o.id) + '">' + esc(o.naam) + "</label>" +
+      (o.prijs ? '<span class="veld-waarde">' + euro(o.prijs) + " per stuk</span>" : "") + "</div>";
+    h += '<div class="maat"><input type="range" id="opt-' + esc(o.id) + '" data-veld="' + esc(o.id) + '" data-soort="aantal" min="' + b.min + '" max="' + b.max + '" step="1" value="' + cfg[o.id] + '">' +
+      '<input type="number" data-veld="' + esc(o.id) + '" data-soort="aantal" min="' + b.min + '" max="' + b.max + '" step="1" value="' + cfg[o.id] + '"></div>';
+  } else if (o.type === "kleur") {
+    h += '<div class="veld-kop"><span class="veld-naam">' + esc(o.naam) + '</span><span class="veld-waarde">' + esc((keuzeVan(o, cfg[o.id]) || {}).naam || "") + "</span></div>";
+    h += '<div class="kleuren">' + o.keuzes.map((k) =>
+      '<button type="button" data-veld="' + esc(o.id) + '" data-waarde="' + esc(k.code) + '" aria-pressed="' + (k.code === cfg[o.id]) + '" style="background:' + esc(k.hex) + '" title="' + esc(k.naam) + '"><span class="sr" style="position:absolute;left:-9999px">' + esc(k.naam) + "</span></button>"
+    ).join("") + "</div>";
+  } else if (o.type === "schakelaar") {
+    h += '<div class="schakel"><div class="om"><input type="checkbox" id="opt-' + esc(o.id) + '" data-veld="' + esc(o.id) + '" data-soort="schakelaar"' + (cfg[o.id] ? " checked" : "") + '>' +
+      '<label class="veld-naam" for="opt-' + esc(o.id) + '">' + esc(o.naam) + "</label></div>" +
+      '<span class="veld-waarde">' + (o.prijs ? "+" + euro(o.prijs) : o.prijsPerEenheid ? "+" + euro(o.prijsPerEenheid * eenheidVan(groep, cfg)) : "") + "</span></div>";
+  } else {
+    h += '<div class="veld-kop"><span class="veld-naam">' + esc(o.naam) + "</span></div>";
+    h += '<div class="keuzes">' + o.keuzes.map((k) => {
+      const meer = meerprijsLabel(k, groep, cfg);
+      return '<button type="button" data-veld="' + esc(o.id) + '" data-waarde="' + esc(k.code) + '" aria-pressed="' + (k.code === cfg[o.id]) + '">' +
+        esc(k.naam) + (meer ? ' <span class="meer">' + esc(meer) + "</span>" : "") + "</button>";
+    }).join("") + "</div>";
+  }
+  return h + "</div>";
+}
+
+function renderPreview() {
+  const groep = huidigeGroep();
+  const cfg = configVan(groep);
+  const p = bereken(groep, cfg);
+  $("#tekening").innerHTML = tekening(groep, cfg);
+  $("#tekening-bijschrift").textContent = omschrijvingVan(groep, cfg);
+  $("#prijsregels").innerHTML = p.regels.map((r) =>
+    '<div class="' + (r.sub ? "sub" : "") + '"><span>' + esc(r.label) + '</span><span class="bedrag">' + (r.bedrag < 0 ? "" : "+") + euro(r.bedrag) + "</span></div>"
+  ).join("");
+  $("#stukprijs").textContent = euro(p.perStuk);
+  $("#stukprijs-incl").textContent = euro(p.perStuk * (1 + (catalogus.btw || 21) / 100));
+}
+
+function renderOpzet() {
+  const groep = huidigeGroep();
+  const el = document.getElementById("opzet-json");
+  if (el) el.textContent = JSON.stringify(groep, null, 2);
+  const kop = document.getElementById("opzet-groepnaam");
+  if (kop) kop.textContent = groep.naam;
+  const versie = document.getElementById("opzet-versie");
+  if (versie) versie.textContent = catalogus.versie || "onbekend";
+}
+
+function renderConfigurator() {
+  renderCats();
+  renderOpties();
+  renderPreview();
+  renderOpzet();
+}
+
+/* ------------------------------------------------------------------
+   Order
+------------------------------------------------------------------- */
+
+function regelTotaal(r) {
+  return afronden(r.stuksprijs * r.aantal * (1 - (r.korting || 0) / 100));
+}
+function ordertotalen() {
+  const excl = afronden(staat.order.reduce((s, r) => s + regelTotaal(r), 0));
+  const btw = afronden((excl * (catalogus.btw || 21)) / 100);
+  return { excl: excl, btw: btw, incl: afronden(excl + btw) };
+}
+
+function toevoegenAanOrder() {
+  const groep = huidigeGroep();
+  const cfg = kopie(configVan(groep));
+  const p = bereken(groep, cfg);
+  staat.order.push({
+    id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    groepId: groep.id,
+    artikelcode: cfg.model,
+    omschrijving: omschrijvingVan(groep, cfg),
+    kenmerken: kenmerkenVan(groep, cfg),
+    cfg: cfg,
+    eenheid: p.eenheid,
+    aantal: Math.max(1, parseInt($("#f-aantal").value, 10) || 1),
+    korting: 0,
+    stuksprijs: p.perStuk
+  });
+  staat.payloadAangepast = false;
+  bewaren();
+  renderOrder();
+  payloadVernieuwen();
+  melden("Toegevoegd aan de order");
+}
+
+function renderOrder() {
+  const t = ordertotalen();
+  $("#order-telling").textContent = staat.order.length ? "(" + staat.order.length + ")" : "";
+  if (!staat.order.length) {
+    $("#order-inhoud").innerHTML = '<div class="leeg">Nog geen regels. Configureer een product en zet het op de order.</div>';
+    return;
+  }
+  let h = '<table><thead><tr><th>Omschrijving</th><th class="num">Aantal</th><th class="num">Korting %</th><th class="num">Stuksprijs</th><th class="num">Totaal</th><th></th></tr></thead><tbody>';
+  staat.order.forEach((r) => {
+    h += '<tr class="orderregel" data-regel="' + esc(r.id) + '">' +
+      '<td><div class="omschrijving">' + esc(r.omschrijving) + '</div><div class="code">' + esc(r.artikelcode) + '</div>' +
+      '<div class="kenmerken">' + esc(r.kenmerken.map((k) => k.naam + ": " + k.waarde).join(", ")) + "</div>" +
+      '<button class="btn-tweede mini" data-actie="kopieer">Terug naar configurator</button></td>' +
+      '<td class="num"><input type="number" min="1" max="999" value="' + r.aantal + '" data-actie="aantal"></td>' +
+      '<td class="num"><input type="number" min="0" max="100" value="' + (r.korting || 0) + '" data-actie="korting"></td>' +
+      '<td class="num">' + euro(r.stuksprijs) + "</td>" +
+      '<td class="num">' + euro(regelTotaal(r)) + "</td>" +
+      '<td class="num"><button class="wis" data-actie="wis" aria-label="Regel verwijderen">&times;</button></td></tr>';
+  });
+  h += "</tbody></table>";
+  h += '<div class="totaal"><span>Totaal excl. btw</span><span class="val">' + euro(t.excl) + "</span></div>";
+  h += '<div class="btw-regel"><span>Btw ' + (catalogus.btw || 21) + "%</span><span>" + euro(t.btw) + "</span></div>";
+  h += '<div class="btw-regel" style="font-weight:600; color:var(--ink)"><span>Totaal incl. btw</span><span>' + euro(t.incl) + "</span></div>";
+  $("#order-inhoud").innerHTML = h;
+}
+
+/* ------------------------------------------------------------------
+   Payload en verzending
+------------------------------------------------------------------- */
+
+function referentie() {
+  const d = new Date();
+  const dag = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+  return "CFG-" + dag + "-" + String(Math.abs(hash(JSON.stringify(staat.order))) % 1000).padStart(3, "0");
+}
+function hash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = (h << 5) - h + s.charCodeAt(i); h |= 0; }
+  return h;
+}
+
+function payloadBouwen() {
+  const t = ordertotalen();
+  return {
+    bron: "configurator-demo",
+    catalogus_versie: catalogus.versie,
+    referentie: referentie(),
+    aangemaakt_op: new Date().toISOString(),
+    valuta: catalogus.valuta || "EUR",
+    relatie: {
+      naam: staat.klant.naam,
+      klantnummer: staat.klant.klantnummer,
+      email: staat.klant.email,
+      telefoon: staat.klant.telefoon,
+      referentie_klant: staat.klant.referentie
+    },
+    levering: { gewenste_week: staat.klant.leverweek, opmerking: staat.klant.opmerking },
+    regels: staat.order.map((r, i) => ({
+      regelnummer: i + 1,
+      artikelcode: r.artikelcode,
+      productgroep: r.groepId,
+      omschrijving: r.omschrijving,
+      aantal: r.aantal,
+      eenheidsprijs_excl: r.stuksprijs,
+      kortingspercentage: r.korting || 0,
+      regeltotaal_excl: regelTotaal(r),
+      btw_percentage: catalogus.btw || 21,
+      configuratie_id: r.id,
+      kenmerken: r.kenmerken
+    })),
+    totalen: { excl_btw: t.excl, btw: t.btw, incl_btw: t.incl }
+  };
+}
+
+function payloadVernieuwen(geforceerd) {
+  if (staat.payloadAangepast && !geforceerd) return;
+  $("#c-payload").value = JSON.stringify(payloadBouwen(), null, 2);
+  staat.payloadAangepast = false;
+}
+
+function statusTonen(tekst, soort) {
+  const el = $("#c-status");
+  el.innerHTML = '<div class="status' + (soort ? " " + soort : "") + '">' + esc(tekst) + "</div>";
+}
+
+function logRegel(tekst) {
+  staat.log.unshift(new Date().toLocaleTimeString("nl-NL") + "  " + tekst);
+  staat.log = staat.log.slice(0, 40);
+  $("#c-log").innerHTML = staat.log.map((r) => "<div>" + esc(r) + "</div>").join("");
+}
+
+async function versturen() {
+  let payload;
+  try {
+    payload = JSON.parse($("#c-payload").value);
+  } catch (e) {
+    statusTonen("De JSON klopt niet: " + e.message, "fout");
+    return;
+  }
+  if (!payload.regels || !payload.regels.length) {
+    statusTonen("Er staan geen regels op de order.", "fout");
+    return;
+  }
+  const knop = $("#btn-versturen");
+  knop.disabled = true;
+  const start = performance.now();
+
+  if (staat.koppeling.testmodus) {
+    await new Promise((r) => setTimeout(r, 500));
+    const nummer = "SO" + String(100000 + (Math.abs(hash(payload.referentie)) % 899999));
+    statusTonen("Testmodus. Speed40 zou antwoorden met ordernummer " + nummer + ".", "ok");
+    logRegel("TESTMODUS " + payload.referentie + " met " + payload.regels.length + " regels, ordernummer " + nummer);
+    knop.disabled = false;
+    return;
+  }
+
+  const headers = { "Content-Type": "application/json" };
+  if (staat.sleutel && staat.koppeling.headernaam) headers[staat.koppeling.headernaam] = staat.sleutel;
+
+  try {
+    const res = await fetch(staat.koppeling.endpoint, { method: "POST", headers: headers, body: JSON.stringify(payload) });
+    const duur = Math.round(performance.now() - start);
+    const tekst = await res.text();
+    if (res.ok) {
+      statusTonen("Verstuurd. Antwoord " + res.status + " in " + duur + " ms.", "ok");
+    } else {
+      statusTonen("Speed40 gaf status " + res.status + " terug.", "fout");
+    }
+    logRegel("POST " + staat.koppeling.endpoint + " -> " + res.status + " (" + duur + " ms)\n" + tekst.slice(0, 600));
+  } catch (e) {
+    statusTonen("Geen verbinding: " + e.message + ". Draait de bridge, en staat het endpoint goed?", "fout");
+    logRegel("POST " + staat.koppeling.endpoint + " mislukt: " + e.message);
+  }
+  knop.disabled = false;
+}
+
+function curlCommando() {
+  const payload = $("#c-payload").value;
+  const kop = staat.sleutel && staat.koppeling.headernaam ? " \\\n  -H '" + staat.koppeling.headernaam + ": " + staat.sleutel + "'" : "";
+  return "curl -X POST '" + staat.koppeling.endpoint + "' \\\n  -H 'Content-Type: application/json'" + kop + " \\\n  -d '" + payload.replace(/'/g, "'\\''") + "'";
+}
+
+async function kopieer(tekst, melding) {
+  try {
+    await navigator.clipboard.writeText(tekst);
+    melden(melding);
+  } catch (e) {
+    melden("Kopiëren lukt niet in deze browser");
+  }
+}
+
+/* ------------------------------------------------------------------
+   Catalogus laden en opslaan
+------------------------------------------------------------------- */
+
+function catalogusStatus(tekst, soort) {
+  $("#c-catalogus-status").innerHTML = '<div class="status' + (soort ? " " + soort : "") + '">' + esc(tekst) + "</div>";
+}
+
+function catalogusGeldig(data) {
+  return data && Array.isArray(data.groepen) && data.groepen.length &&
+    data.groepen.every((g) => g.id && Array.isArray(g.modellen) && g.modellen.length && Array.isArray(g.opties));
+}
+
+async function catalogusLaden() {
+  const url = $("#c-catalogus-url").value.trim();
+  if (!url) { catalogusStatus("Vul eerst een URL in.", "fout"); return; }
+  try {
+    const headers = {};
+    if (staat.sleutel && staat.koppeling.headernaam) headers[staat.koppeling.headernaam] = staat.sleutel;
+    const res = await fetch(url, { headers: headers });
+    const data = await res.json();
+    if (!catalogusGeldig(data)) { catalogusStatus("Het antwoord heeft niet de vorm van een catalogus.", "fout"); return; }
+    catalogus = data;
+    staat.configs = {};
+    staat.groepId = catalogus.groepen[0].id;
+    renderConfigurator();
+    catalogusStatus("Catalogus geladen, versie " + (catalogus.versie || "onbekend") + ", " + catalogus.groepen.length + " productgroepen.", "ok");
+    logRegel("GET " + url + " -> catalogus " + (catalogus.versie || "") + " met " + catalogus.groepen.length + " groepen");
+  } catch (e) {
+    catalogusStatus("Laden mislukt: " + e.message, "fout");
+  }
+}
+
+function catalogusExport() {
+  const blob = new Blob([JSON.stringify(catalogus, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "catalogus-" + (catalogus.versie || "export") + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ------------------------------------------------------------------
+   Opslaan in de browser
+------------------------------------------------------------------- */
+
+function bewaren() {
+  try {
+    localStorage.setItem(OPSLAG, JSON.stringify({
+      groepId: staat.groepId, configs: staat.configs, order: staat.order,
+      klant: staat.klant, koppeling: staat.koppeling
+    }));
+    sessionStorage.setItem(SLEUTEL_OPSLAG, staat.sleutel || "");
+  } catch (e) { /* privémodus, dan werkt de demo zonder onthouden */ }
+}
+
+function herstellen() {
+  try {
+    const rauw = localStorage.getItem(OPSLAG);
+    if (rauw) {
+      const d = JSON.parse(rauw);
+      if (d.configs) staat.configs = d.configs;
+      if (d.order) staat.order = d.order;
+      if (d.klant) staat.klant = Object.assign(staat.klant, d.klant);
+      if (d.koppeling) staat.koppeling = Object.assign(staat.koppeling, d.koppeling);
+      if (d.groepId && catalogus.groepen.some((g) => g.id === d.groepId)) staat.groepId = d.groepId;
+    }
+    staat.sleutel = sessionStorage.getItem(SLEUTEL_OPSLAG) || "";
+  } catch (e) { /* niets hersteld, verder met de standaardwaarden */ }
+}
+
+let meldingTimer = null;
+function melden(tekst) {
+  const el = $("#melding");
+  el.textContent = tekst;
+  el.classList.add("zichtbaar");
+  clearTimeout(meldingTimer);
+  meldingTimer = setTimeout(() => el.classList.remove("zichtbaar"), 2000);
+}
+</script>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   Bediening
+------------------------------------------------------------------- */
+
+function schermTonen(naam) {
+  document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.scherm === naam)));
+  document.querySelectorAll(".scherm").forEach((s) => { s.hidden = s.id !== "scr-" + naam; });
+  if (naam === "koppeling") payloadVernieuwen();
+  if (naam === "opzet") renderOpzet();
+}
+
+document.querySelectorAll(".tabs button").forEach((b) => {
+  b.addEventListener("click", () => schermTonen(b.dataset.scherm));
+});
+
+$("#cats").addEventListener("click", (e) => {
+  const knop = e.target.closest("button[data-groep]");
+  if (!knop) return;
+  staat.groepId = knop.dataset.groep;
+  bewaren();
+  renderConfigurator();
+});
+
+$("#opties").addEventListener("click", (e) => {
+  const knop = e.target.closest("button[data-veld]");
+  if (!knop) return;
+  const groep = huidigeGroep();
+  const cfg = configVan(groep);
+  cfg[knop.dataset.veld] = knop.dataset.waarde;
+  configOpschonen(groep, cfg);
+  bewaren();
+  renderOpties();
+  renderPreview();
+  renderOpzet();
+});
+
+$("#opties").addEventListener("input", (e) => {
+  const veld = e.target.closest("[data-veld]");
+  if (!veld || !veld.dataset.soort) return;
+  const groep = huidigeGroep();
+  const cfg = configVan(groep);
+  if (veld.dataset.soort === "schakelaar") {
+    cfg[veld.dataset.veld] = veld.checked;
+    bewaren();
+    renderOpties();
+    renderPreview();
+    renderOpzet();
+    return;
+  }
+  const waarde = parseFloat(veld.value);
+  if (isNaN(waarde)) return;
+  cfg[veld.dataset.veld] = waarde;
+  veld.parentNode.querySelectorAll("[data-veld='" + veld.dataset.veld + "']").forEach((el) => { if (el !== veld) el.value = waarde; });
+  renderPreview();
+  bewaren();
+});
+
+$("#opties").addEventListener("change", (e) => {
+  const veld = e.target.closest("[data-soort='maat'], [data-soort='aantal']");
+  if (!veld) return;
+  const groep = huidigeGroep();
+  configOpschonen(groep, configVan(groep));
+  renderOpties();
+  renderPreview();
+  renderOpzet();
+  bewaren();
+});
+
+$("#btn-toevoegen").addEventListener("click", toevoegenAanOrder);
+
+$("#order-inhoud").addEventListener("click", (e) => {
+  const rij = e.target.closest("[data-regel]");
+  if (!rij) return;
+  const regel = staat.order.find((r) => r.id === rij.dataset.regel);
+  if (!regel) return;
+  const actie = e.target.closest("[data-actie]");
+  if (!actie) return;
+  if (actie.dataset.actie === "wis") {
+    staat.order = staat.order.filter((r) => r.id !== regel.id);
+  } else if (actie.dataset.actie === "kopieer") {
+    staat.groepId = regel.groepId;
+    staat.configs[regel.groepId] = kopie(regel.cfg);
+    renderConfigurator();
+    schermTonen("configureren");
+    melden("Configuratie staat weer in het formulier");
+    return;
+  }
+  staat.payloadAangepast = false;
+  bewaren();
+  renderOrder();
+  payloadVernieuwen();
+});
+
+$("#order-inhoud").addEventListener("input", (e) => {
+  const rij = e.target.closest("[data-regel]");
+  const invoer = e.target.closest("input[data-actie]");
+  if (!rij || !invoer) return;
+  const regel = staat.order.find((r) => r.id === rij.dataset.regel);
+  if (!regel) return;
+  const waarde = parseFloat(invoer.value);
+  if (isNaN(waarde)) return;
+  if (invoer.dataset.actie === "aantal") regel.aantal = Math.max(1, Math.round(waarde));
+  if (invoer.dataset.actie === "korting") regel.korting = Math.max(0, Math.min(100, waarde));
+  staat.payloadAangepast = false;
+  bewaren();
+  const totaal = ordertotalen();
+  rij.querySelector("td:nth-child(5)").textContent = euro(regelTotaal(regel));
+  document.querySelector(".totaal .val") && renderOrderTotalen(totaal);
+  payloadVernieuwen();
+});
+
+function renderOrderTotalen(t) {
+  const blok = $("#order-inhoud");
+  const totaalEl = blok.querySelector(".totaal .val");
+  if (totaalEl) totaalEl.textContent = euro(t.excl);
+  const btwEls = blok.querySelectorAll(".btw-regel span:last-child");
+  if (btwEls[0]) btwEls[0].textContent = euro(t.btw);
+  if (btwEls[1]) btwEls[1].textContent = euro(t.incl);
+}
+
+$("#btn-order-leegmaken").addEventListener("click", () => {
+  if (!staat.order.length) return;
+  if (!confirm("Alle orderregels verwijderen?")) return;
+  staat.order = [];
+  staat.payloadAangepast = false;
+  bewaren();
+  renderOrder();
+  payloadVernieuwen();
+});
+
+document.querySelectorAll("[data-klant]").forEach((el) => {
+  el.addEventListener("input", () => {
+    staat.klant[el.dataset.klant] = el.value;
+    staat.payloadAangepast = false;
+    bewaren();
+    payloadVernieuwen();
+  });
+});
+
+$("#c-endpoint").addEventListener("input", (e) => { staat.koppeling.endpoint = e.target.value; bewaren(); });
+$("#c-headernaam").addEventListener("input", (e) => { staat.koppeling.headernaam = e.target.value; bewaren(); });
+$("#c-sleutel").addEventListener("input", (e) => { staat.sleutel = e.target.value; bewaren(); });
+$("#c-catalogus-url").addEventListener("input", (e) => { staat.koppeling.catalogusUrl = e.target.value; bewaren(); });
+$("#c-testmodus").addEventListener("change", (e) => { staat.koppeling.testmodus = e.target.checked; bewaren(); });
+$("#c-payload").addEventListener("input", () => { staat.payloadAangepast = true; });
+
+$("#btn-payload-vernieuwen").addEventListener("click", () => { payloadVernieuwen(true); melden("Payload opnieuw opgebouwd"); });
+$("#btn-versturen").addEventListener("click", versturen);
+$("#btn-curl").addEventListener("click", () => kopieer(curlCommando(), "curl staat op het klembord"));
+$("#btn-payload-kopieren").addEventListener("click", () => kopieer($("#c-payload").value, "JSON staat op het klembord"));
+$("#btn-catalogus-laden").addEventListener("click", catalogusLaden);
+$("#btn-catalogus-export").addEventListener("click", catalogusExport);
+$("#btn-catalogus-herstel").addEventListener("click", () => {
+  catalogus = kopie(DEMO_CATALOGUS);
+  staat.configs = {};
+  staat.groepId = catalogus.groepen[0].id;
+  renderConfigurator();
+  catalogusStatus("Terug op de ingebouwde demo-catalogus.", "ok");
+});
+
+$("#btn-opzet-kopieren").addEventListener("click", () => kopieer($("#opzet-json").textContent, "Catalogusrecord staat op het klembord"));
+
+$("#f-aantal").addEventListener("input", (e) => { staat.aantal = Math.max(1, parseInt(e.target.value, 10) || 1); });
+
+/* ------------------------------------------------------------------
+   Starten
+------------------------------------------------------------------- */
+
+herstellen();
+document.querySelectorAll("[data-klant]").forEach((el) => { el.value = staat.klant[el.dataset.klant] || ""; });
+$("#c-endpoint").value = staat.koppeling.endpoint;
+$("#c-headernaam").value = staat.koppeling.headernaam;
+$("#c-catalogus-url").value = staat.koppeling.catalogusUrl;
+$("#c-testmodus").checked = staat.koppeling.testmodus;
+$("#c-sleutel").value = staat.sleutel;
+renderConfigurator();
+renderOrder();
+payloadVernieuwen(true);
+</script>
+</body>
+</html>
