@@ -121,6 +121,24 @@ te beginnen.
 }
 ```
 
+### Assortiment vullen
+
+De map `assortiment/` bevat vijf platte lijsten waarin je vastlegt welke
+productgroepen, modellen, opties en varianten er zijn, plus een script dat er
+`catalogus.json` van maakt.
+
+```
+node configurator/assortiment/catalogus-bouwen.mjs
+CATALOGUS=$PWD/configurator/assortiment/catalogus.json node configurator/bridge.mjs
+```
+
+De bridge serveert de catalogus dan op `/speed40/v1/catalogus` en je laadt hem in
+de pagina onder het tabblad Speed40. Het script controleert de vulling en noemt
+bij een fout het bestand en de regel. De kolommen staan in
+`assortiment/README.md`, met de vertaling naar de velden in het ERP.
+
+### Velden van de catalogus
+
 `grondslag` is `breedte` of `m2`. Bij `breedte` rekent de groep met de breedte in
 centimeters, bij `m2` met breedte maal hoogte gedeeld door tienduizend. Met
 `minimumEenheid` zet je een ondergrens, bijvoorbeeld 0,6 m2 voor een klein

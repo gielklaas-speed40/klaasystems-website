@@ -1,0 +1,66 @@
+groep_id;optie_id;waarde_code;naam;prijs;prijs_per_eenheid;factor;hex;volgorde
+bank;diepte;d90;90 cm;0;;;;10
+bank;diepte;d100;100 cm;0;;;;20
+bank;diepte;d110;110 cm;95;;;;30
+bank;opstelling;recht;Rechte bank;0;;;;10
+bank;opstelling;chaise-links;Chaise longue links;320;;;;20
+bank;opstelling;chaise-rechts;Chaise longue rechts;320;;;;30
+bank;armleuning;smal;Smal;0;;;;10
+bank;armleuning;breed;Breed;90;;;;20
+bank;armleuning;geen;Zonder;-60;;;;30
+bank;stofgroep;A;Groep A;;;1;;10
+bank;stofgroep;B;Groep B;;;1,12;;20
+bank;stofgroep;C;Groep C;;;1,28;;30
+bank;stofgroep;LDR;Leer;;;1,65;;40
+bank;kleur;zand;Zand;;;;#D9CCB8;10
+bank;kleur;olijf;Olijf;;;;#6E7A5C;20
+bank;kleur;antraciet;Antraciet;;;;#3B4046;30
+bank;kleur;roest;Roest;;;;#9C5A3C;40
+bank;kleur;ijsblauw;IJsblauw;;;;#8FA3B8;50
+bank;kleur;krijt;Krijtwit;;;;#E8E3DA;60
+bank;poten;metaal;Metaal zwart;0;;;;10
+bank;poten;eiken;Eiken;85;;;;20
+bank;poten;blok;Blokpoot;45;;;;30
+eettafel;diepte;d90;90 cm;0;;;;10
+eettafel;diepte;d100;100 cm;85;;;;20
+eettafel;diepte;d110;110 cm;150;;;;30
+eettafel;rand;recht;Recht;0;;;;10
+eettafel;rand;schuin;Schuin afgewerkt;120;;;;20
+eettafel;rand;boomstam;Boomstamrand;190;;;;30
+eettafel;kleur;naturel;Naturel eiken;;;;#C9A97B;10
+eettafel;kleur;gerookt;Gerookt;;;;#8A6A4A;20
+eettafel;kleur;noten;Noten;;;;#6B4A34;30
+eettafel;kleur;zwart;Zwart geolied;;;;#3A3733;40
+eettafel;kleur;beton;Betonlook;;;;#9A9A96;50
+eettafel;onderstel;u-frame;U-frame;0;;;;10
+eettafel;onderstel;matrix;Matrix;180;;;;20
+eettafel;onderstel;spider;Spider;260;;;;30
+eettafel;onderstel;x-poot;X-poot;210;;;;40
+kast;diepte;d40;40 cm;0;;;;10
+kast;diepte;d60;60 cm;120;;;;20
+kast;front;melamine;Melamine;0;;;;10
+kast;front;gelakt;Gelakt;;3,2;;;20
+kast;front;fineer;Fineer eiken;;5,4;;;30
+kast;kleur;wit;Wit;;;;#E9E7E2;10
+kast;kleur;eiken;Eiken;;;;#C9A97B;20
+kast;kleur;grijs;Stofgrijs;;;;#8C8F92;30
+kast;kleur;groen;Diepgroen;;;;#3F5647;40
+kast;kleur;zwart;Zwart;;;;#333638;50
+kast;greep;inkeping;Inkeping;0;;;;10
+kast;greep;beugel;Beugel zwart;45;;;;20
+kast;greep;push;Push to open;120;;;;30
+raamdecoratie;montage;in-de-dag;In de dag;0;;;;10
+raamdecoratie;montage;op-de-dag;Op de dag;0;;;;20
+raamdecoratie;doek;transparant;Transparant;;;1;;10
+raamdecoratie;doek;licht;Lichtdoorlatend;;;1,08;;20
+raamdecoratie;doek;verduister;Verduisterend;;;1,24;;30
+raamdecoratie;kleur;linnen;Linnen;;;;#DCD3C4;10
+raamdecoratie;kleur;wit;Wit;;;;#F0EEE9;20
+raamdecoratie;kleur;taupe;Taupe;;;;#A99787;30
+raamdecoratie;kleur;grijs;Grijs;;;;#8D9296;40
+raamdecoratie;kleur;hout;Houtnerf;;;;#B08A5E;50
+raamdecoratie;bediening;ketting-links;Ketting links;0;;;;10
+raamdecoratie;bediening;ketting-rechts;Ketting rechts;0;;;;20
+raamdecoratie;bediening;koord;Koord;15;;;;30
+raamdecoratie;bediening;motor;Motor met afstandsbediening;210;;;;40
+raamdecoratie;bediening;motor-app;Motor met app en tijdschema;295;;;;50

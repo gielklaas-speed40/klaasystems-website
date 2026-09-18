@@ -1,0 +1,3 @@
+groep_id;optie_id;artikelcode;min;max;stap;standaard
+kast;breedte;KST-DRS;80;280;;180
+kast;hoogte;KST-DRS;60;120;5;85

@@ -5,7 +5,7 @@ Statische site voor Klaasystems (klaasystems.nl), gehost via GitHub Pages vanaf 
 - `index.html`: de hoofdsite, één zelfstandig bestand zonder dependencies (lettertype Archivo en logo zitten erin).
 - `urenbriefje/`: demo urenregistratie.
 - `vlakmaat/`: tool voor het opmeten van vlakken uit rastertekeningen.
-- `configurator/`: demo productconfigurator die orders als JSON naar Speed40 stuurt, met een lokale bridge in `bridge.mjs`. Zie `configurator/README.md`.
+- `configurator/`: demo productconfigurator die orders als JSON naar Speed40 stuurt, met een lokale bridge in `bridge.mjs` en het assortiment als platte lijsten in `configurator/assortiment/`. Zie `configurator/README.md`.
 
 Schrijf teksten in het Nederlands. Loop bij elke tekst- of ontwerpwijziging de checklist hieronder na voordat je klaar bent.
 

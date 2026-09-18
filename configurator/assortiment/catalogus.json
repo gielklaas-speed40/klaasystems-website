@@ -1,0 +1,813 @@
+{
+  "versie": "demo-2026-09",
+  "herkomst": "Ingebouwde voorbeeldcatalogus",
+  "btw": 21,
+  "valuta": "EUR",
+  "groepen": [
+    {
+      "id": "bank",
+      "naam": "Banken",
+      "enkelvoud": "Bank",
+      "tekening": "bank",
+      "grondslag": "breedte",
+      "modellen": [
+        {
+          "code": "BNK-LNG",
+          "naam": "Lounge",
+          "basis": 1290,
+          "perEenheid": 6.5,
+          "omschrijving": "Losse kussens, lage rug"
+        },
+        {
+          "code": "BNK-MOD",
+          "naam": "Modulair",
+          "basis": 1690,
+          "perEenheid": 8.2,
+          "omschrijving": "Per element uit te breiden"
+        },
+        {
+          "code": "BNK-KLS",
+          "naam": "Klassiek",
+          "basis": 1890,
+          "perEenheid": 7.4,
+          "omschrijving": "Gecapitonneerde rug, hoge zit"
+        }
+      ],
+      "opties": [
+        {
+          "id": "breedte",
+          "naam": "Breedte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 140,
+          "max": 340,
+          "stap": 10,
+          "standaard": 220,
+          "eenheid": "cm"
+        },
+        {
+          "id": "diepte",
+          "naam": "Zitdiepte",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "d100",
+          "keuzes": [
+            {
+              "code": "d90",
+              "naam": "90 cm",
+              "prijs": 0
+            },
+            {
+              "code": "d100",
+              "naam": "100 cm",
+              "prijs": 0
+            },
+            {
+              "code": "d110",
+              "naam": "110 cm",
+              "prijs": 95
+            }
+          ]
+        },
+        {
+          "id": "opstelling",
+          "naam": "Opstelling",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "recht",
+          "keuzes": [
+            {
+              "code": "recht",
+              "naam": "Rechte bank",
+              "prijs": 0
+            },
+            {
+              "code": "chaise-links",
+              "naam": "Chaise longue links",
+              "prijs": 320
+            },
+            {
+              "code": "chaise-rechts",
+              "naam": "Chaise longue rechts",
+              "prijs": 320
+            }
+          ]
+        },
+        {
+          "id": "armleuning",
+          "naam": "Armleuning",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "smal",
+          "keuzes": [
+            {
+              "code": "smal",
+              "naam": "Smal",
+              "prijs": 0
+            },
+            {
+              "code": "breed",
+              "naam": "Breed",
+              "prijs": 90
+            },
+            {
+              "code": "geen",
+              "naam": "Zonder",
+              "prijs": -60
+            }
+          ]
+        },
+        {
+          "id": "stofgroep",
+          "naam": "Stofgroep",
+          "groep": "Bekleding",
+          "type": "keuze",
+          "standaard": "B",
+          "keuzes": [
+            {
+              "code": "A",
+              "naam": "Groep A",
+              "factor": 1
+            },
+            {
+              "code": "B",
+              "naam": "Groep B",
+              "factor": 1.12
+            },
+            {
+              "code": "C",
+              "naam": "Groep C",
+              "factor": 1.28
+            },
+            {
+              "code": "LDR",
+              "naam": "Leer",
+              "factor": 1.65
+            }
+          ]
+        },
+        {
+          "id": "kleur",
+          "naam": "Kleur",
+          "groep": "Bekleding",
+          "type": "kleur",
+          "standaard": "zand",
+          "keuzes": [
+            {
+              "code": "zand",
+              "naam": "Zand",
+              "hex": "#D9CCB8"
+            },
+            {
+              "code": "olijf",
+              "naam": "Olijf",
+              "hex": "#6E7A5C"
+            },
+            {
+              "code": "antraciet",
+              "naam": "Antraciet",
+              "hex": "#3B4046"
+            },
+            {
+              "code": "roest",
+              "naam": "Roest",
+              "hex": "#9C5A3C"
+            },
+            {
+              "code": "ijsblauw",
+              "naam": "IJsblauw",
+              "hex": "#8FA3B8"
+            },
+            {
+              "code": "krijt",
+              "naam": "Krijtwit",
+              "hex": "#E8E3DA"
+            }
+          ]
+        },
+        {
+          "id": "poten",
+          "naam": "Poten",
+          "groep": "Uitvoering",
+          "type": "keuze",
+          "standaard": "metaal",
+          "keuzes": [
+            {
+              "code": "metaal",
+              "naam": "Metaal zwart",
+              "prijs": 0
+            },
+            {
+              "code": "eiken",
+              "naam": "Eiken",
+              "prijs": 85
+            },
+            {
+              "code": "blok",
+              "naam": "Blokpoot",
+              "prijs": 45
+            }
+          ]
+        },
+        {
+          "id": "rugverstelling",
+          "naam": "Verstelbare rug",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 240,
+          "standaard": false
+        },
+        {
+          "id": "slaapfunctie",
+          "naam": "Slaapfunctie",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 420,
+          "standaard": false
+        }
+      ]
+    },
+    {
+      "id": "eettafel",
+      "naam": "Eettafels",
+      "enkelvoud": "Eettafel",
+      "tekening": "tafel",
+      "grondslag": "breedte",
+      "modellen": [
+        {
+          "code": "TFL-BST",
+          "naam": "Boomstamblad",
+          "basis": 980,
+          "perEenheid": 9.2,
+          "omschrijving": "Massief eiken, 6 cm dik"
+        },
+        {
+          "code": "TFL-STK",
+          "naam": "Strak blad",
+          "basis": 620,
+          "perEenheid": 5.4,
+          "omschrijving": "Fineer op onderconstructie"
+        },
+        {
+          "code": "TFL-KER",
+          "naam": "Keramiek",
+          "basis": 1240,
+          "perEenheid": 11.5,
+          "omschrijving": "12 mm keramiek op stalen frame"
+        }
+      ],
+      "opties": [
+        {
+          "id": "breedte",
+          "naam": "Breedte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 140,
+          "max": 320,
+          "stap": 10,
+          "standaard": 200,
+          "eenheid": "cm"
+        },
+        {
+          "id": "diepte",
+          "naam": "Diepte",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "d100",
+          "keuzes": [
+            {
+              "code": "d90",
+              "naam": "90 cm",
+              "prijs": 0
+            },
+            {
+              "code": "d100",
+              "naam": "100 cm",
+              "prijs": 85
+            },
+            {
+              "code": "d110",
+              "naam": "110 cm",
+              "prijs": 150
+            }
+          ]
+        },
+        {
+          "id": "rand",
+          "naam": "Randafwerking",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "recht",
+          "keuzes": [
+            {
+              "code": "recht",
+              "naam": "Recht",
+              "prijs": 0
+            },
+            {
+              "code": "schuin",
+              "naam": "Schuin afgewerkt",
+              "prijs": 120
+            },
+            {
+              "code": "boomstam",
+              "naam": "Boomstamrand",
+              "prijs": 190
+            }
+          ]
+        },
+        {
+          "id": "kleur",
+          "naam": "Kleur blad",
+          "groep": "Bekleding",
+          "type": "kleur",
+          "standaard": "naturel",
+          "keuzes": [
+            {
+              "code": "naturel",
+              "naam": "Naturel eiken",
+              "hex": "#C9A97B"
+            },
+            {
+              "code": "gerookt",
+              "naam": "Gerookt",
+              "hex": "#8A6A4A"
+            },
+            {
+              "code": "noten",
+              "naam": "Noten",
+              "hex": "#6B4A34"
+            },
+            {
+              "code": "zwart",
+              "naam": "Zwart geolied",
+              "hex": "#3A3733"
+            },
+            {
+              "code": "beton",
+              "naam": "Betonlook",
+              "hex": "#9A9A96"
+            }
+          ]
+        },
+        {
+          "id": "onderstel",
+          "naam": "Onderstel",
+          "groep": "Uitvoering",
+          "type": "keuze",
+          "standaard": "u-frame",
+          "keuzes": [
+            {
+              "code": "u-frame",
+              "naam": "U-frame",
+              "prijs": 0
+            },
+            {
+              "code": "matrix",
+              "naam": "Matrix",
+              "prijs": 180
+            },
+            {
+              "code": "spider",
+              "naam": "Spider",
+              "prijs": 260
+            },
+            {
+              "code": "x-poot",
+              "naam": "X-poot",
+              "prijs": 210
+            }
+          ]
+        },
+        {
+          "id": "verlengbaar",
+          "naam": "Verlengbaar, 2 x 50 cm",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 295,
+          "standaard": false
+        },
+        {
+          "id": "beschermlaag",
+          "naam": "Beschermlaag",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 85,
+          "standaard": false
+        }
+      ]
+    },
+    {
+      "id": "kast",
+      "naam": "Kasten",
+      "enkelvoud": "Kast",
+      "tekening": "kast",
+      "grondslag": "breedte",
+      "modellen": [
+        {
+          "code": "KST-SCH",
+          "naam": "Schuifdeurkast",
+          "basis": 1150,
+          "perEenheid": 7.8,
+          "omschrijving": "Twee lopers, zachte aanslag"
+        },
+        {
+          "code": "KST-DRA",
+          "naam": "Draaideurkast",
+          "basis": 890,
+          "perEenheid": 6.2,
+          "omschrijving": "Scharnieren met demping"
+        },
+        {
+          "code": "KST-DRS",
+          "naam": "Dressoir",
+          "basis": 560,
+          "perEenheid": 4.6,
+          "omschrijving": "Lage kast, vrijstaand"
+        }
+      ],
+      "opties": [
+        {
+          "id": "breedte",
+          "naam": "Breedte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 100,
+          "max": 400,
+          "stap": 10,
+          "standaard": 250,
+          "eenheid": "cm",
+          "bereikPerModel": {
+            "KST-DRS": {
+              "min": 80,
+              "max": 280,
+              "standaard": 180
+            }
+          }
+        },
+        {
+          "id": "hoogte",
+          "naam": "Hoogte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 180,
+          "max": 280,
+          "stap": 5,
+          "standaard": 240,
+          "eenheid": "cm",
+          "bereikPerModel": {
+            "KST-DRS": {
+              "min": 60,
+              "max": 120,
+              "stap": 5,
+              "standaard": 85
+            }
+          }
+        },
+        {
+          "id": "diepte",
+          "naam": "Diepte",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "d60",
+          "keuzes": [
+            {
+              "code": "d40",
+              "naam": "40 cm",
+              "prijs": 0
+            },
+            {
+              "code": "d60",
+              "naam": "60 cm",
+              "prijs": 120
+            }
+          ]
+        },
+        {
+          "id": "deuren",
+          "naam": "Aantal deuren",
+          "groep": "Maatvoering",
+          "type": "aantal",
+          "min": 2,
+          "max": 6,
+          "stap": 1,
+          "standaard": 3,
+          "prijs": 140
+        },
+        {
+          "id": "front",
+          "naam": "Front",
+          "groep": "Bekleding",
+          "type": "keuze",
+          "standaard": "melamine",
+          "keuzes": [
+            {
+              "code": "melamine",
+              "naam": "Melamine",
+              "prijs": 0
+            },
+            {
+              "code": "gelakt",
+              "naam": "Gelakt",
+              "prijsPerEenheid": 3.2
+            },
+            {
+              "code": "fineer",
+              "naam": "Fineer eiken",
+              "prijsPerEenheid": 5.4
+            }
+          ]
+        },
+        {
+          "id": "kleur",
+          "naam": "Kleur front",
+          "groep": "Bekleding",
+          "type": "kleur",
+          "standaard": "wit",
+          "keuzes": [
+            {
+              "code": "wit",
+              "naam": "Wit",
+              "hex": "#E9E7E2"
+            },
+            {
+              "code": "eiken",
+              "naam": "Eiken",
+              "hex": "#C9A97B"
+            },
+            {
+              "code": "grijs",
+              "naam": "Stofgrijs",
+              "hex": "#8C8F92"
+            },
+            {
+              "code": "groen",
+              "naam": "Diepgroen",
+              "hex": "#3F5647"
+            },
+            {
+              "code": "zwart",
+              "naam": "Zwart",
+              "hex": "#333638"
+            }
+          ]
+        },
+        {
+          "id": "greep",
+          "naam": "Greep",
+          "groep": "Uitvoering",
+          "type": "keuze",
+          "standaard": "inkeping",
+          "keuzes": [
+            {
+              "code": "inkeping",
+              "naam": "Inkeping",
+              "prijs": 0
+            },
+            {
+              "code": "beugel",
+              "naam": "Beugel zwart",
+              "prijs": 45
+            },
+            {
+              "code": "push",
+              "naam": "Push to open",
+              "prijs": 120
+            }
+          ]
+        },
+        {
+          "id": "legplanken",
+          "naam": "Legplanken",
+          "groep": "Indeling",
+          "type": "aantal",
+          "min": 1,
+          "max": 10,
+          "stap": 1,
+          "standaard": 4,
+          "prijs": 32
+        },
+        {
+          "id": "lades",
+          "naam": "Lades",
+          "groep": "Indeling",
+          "type": "aantal",
+          "min": 0,
+          "max": 6,
+          "stap": 1,
+          "standaard": 0,
+          "prijs": 95
+        },
+        {
+          "id": "roede",
+          "naam": "Hangroede",
+          "groep": "Indeling",
+          "type": "schakelaar",
+          "prijs": 65,
+          "standaard": true,
+          "alleenBijModel": [
+            "KST-SCH",
+            "KST-DRA"
+          ]
+        },
+        {
+          "id": "verlichting",
+          "naam": "Ledverlichting",
+          "groep": "Indeling",
+          "type": "schakelaar",
+          "prijs": 180,
+          "standaard": false
+        }
+      ]
+    },
+    {
+      "id": "raamdecoratie",
+      "naam": "Raamdecoratie",
+      "enkelvoud": "Raamdecoratie",
+      "tekening": "raam",
+      "grondslag": "m2",
+      "minimumEenheid": 0.6,
+      "modellen": [
+        {
+          "code": "RAM-ROL",
+          "naam": "Rolgordijn",
+          "basis": 55,
+          "perEenheid": 74,
+          "omschrijving": "Cassette of open systeem"
+        },
+        {
+          "code": "RAM-PLI",
+          "naam": "Plissé",
+          "basis": 85,
+          "perEenheid": 128,
+          "omschrijving": "Boven en onder verstelbaar"
+        },
+        {
+          "code": "RAM-JAL",
+          "naam": "Houten jaloezie 50 mm",
+          "basis": 105,
+          "perEenheid": 158,
+          "omschrijving": "Lamellen van abachihout"
+        },
+        {
+          "code": "RAM-VOU",
+          "naam": "Vouwgordijn",
+          "basis": 130,
+          "perEenheid": 172,
+          "omschrijving": "Gestikte banen, strijkvrij"
+        }
+      ],
+      "opties": [
+        {
+          "id": "breedte",
+          "naam": "Breedte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 40,
+          "max": 300,
+          "stap": 1,
+          "standaard": 140,
+          "eenheid": "cm"
+        },
+        {
+          "id": "hoogte",
+          "naam": "Hoogte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 40,
+          "max": 320,
+          "stap": 1,
+          "standaard": 180,
+          "eenheid": "cm"
+        },
+        {
+          "id": "montage",
+          "naam": "Montage",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "in-de-dag",
+          "keuzes": [
+            {
+              "code": "in-de-dag",
+              "naam": "In de dag",
+              "prijs": 0
+            },
+            {
+              "code": "op-de-dag",
+              "naam": "Op de dag",
+              "prijs": 0
+            }
+          ]
+        },
+        {
+          "id": "doek",
+          "naam": "Doek",
+          "groep": "Bekleding",
+          "type": "keuze",
+          "standaard": "licht",
+          "keuzes": [
+            {
+              "code": "transparant",
+              "naam": "Transparant",
+              "factor": 1
+            },
+            {
+              "code": "licht",
+              "naam": "Lichtdoorlatend",
+              "factor": 1.08
+            },
+            {
+              "code": "verduister",
+              "naam": "Verduisterend",
+              "factor": 1.24
+            }
+          ]
+        },
+        {
+          "id": "kleur",
+          "naam": "Kleur",
+          "groep": "Bekleding",
+          "type": "kleur",
+          "standaard": "linnen",
+          "keuzes": [
+            {
+              "code": "linnen",
+              "naam": "Linnen",
+              "hex": "#DCD3C4"
+            },
+            {
+              "code": "wit",
+              "naam": "Wit",
+              "hex": "#F0EEE9"
+            },
+            {
+              "code": "taupe",
+              "naam": "Taupe",
+              "hex": "#A99787"
+            },
+            {
+              "code": "grijs",
+              "naam": "Grijs",
+              "hex": "#8D9296"
+            },
+            {
+              "code": "hout",
+              "naam": "Houtnerf",
+              "hex": "#B08A5E"
+            }
+          ]
+        },
+        {
+          "id": "bediening",
+          "naam": "Bediening",
+          "groep": "Uitvoering",
+          "type": "keuze",
+          "standaard": "ketting-rechts",
+          "keuzes": [
+            {
+              "code": "ketting-links",
+              "naam": "Ketting links",
+              "prijs": 0
+            },
+            {
+              "code": "ketting-rechts",
+              "naam": "Ketting rechts",
+              "prijs": 0
+            },
+            {
+              "code": "koord",
+              "naam": "Koord",
+              "prijs": 15
+            },
+            {
+              "code": "motor",
+              "naam": "Motor met afstandsbediening",
+              "prijs": 210
+            },
+            {
+              "code": "motor-app",
+              "naam": "Motor met app en tijdschema",
+              "prijs": 295
+            }
+          ]
+        },
+        {
+          "id": "cassette",
+          "naam": "Cassette",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 58,
+          "standaard": false
+        },
+        {
+          "id": "inmeten",
+          "naam": "Inmeetservice",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 45,
+          "standaard": false
+        }
+      ]
+    }
+  ]
+}
