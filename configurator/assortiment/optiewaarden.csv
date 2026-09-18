@@ -64,3 +64,16 @@ raamdecoratie;bediening;ketting-rechts;Ketting rechts;0;;;;20
 raamdecoratie;bediening;koord;Koord;15;;;;30
 raamdecoratie;bediening;motor;Motor met afstandsbediening;210;;;;40
 raamdecoratie;bediening;motor-app;Motor met app en tijdschema;295;;;;50
+fauteuil;armleuning;smal;Smal;0;;;;10
+fauteuil;armleuning;breed;Breed;60;;;;20
+fauteuil;stofgroep;A;Groep A;;;1;;10
+fauteuil;stofgroep;B;Groep B;;;1,12;;20
+fauteuil;stofgroep;C;Groep C;;;1,28;;30
+fauteuil;stofgroep;LDR;Leer;;;1,65;;40
+fauteuil;kleur;zand;Zand;;;;#D9CCB8;10
+fauteuil;kleur;olijf;Olijf;;;;#6E7A5C;20
+fauteuil;kleur;antraciet;Antraciet;;;;#3B4046;30
+fauteuil;kleur;roest;Roest;;;;#9C5A3C;40
+fauteuil;kleur;krijt;Krijtwit;;;;#E8E3DA;50
+fauteuil;poten;metaal;Metaal zwart;0;;;;10
+fauteuil;poten;eiken;Eiken;65;;;;20

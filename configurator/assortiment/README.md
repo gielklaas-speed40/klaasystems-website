@@ -24,14 +24,18 @@ je 6,5 of 6.5 schrijven.
 | --- | --- |
 | Welke productgroepen bestaan er en waarop rekenen ze | `productgroepen.csv` |
 | Welke modellen kun je kiezen binnen een groep | `modellen.csv` |
+| Welke varianten hangen onder een trap, elk met een eigen artikelcode | `varianten.csv` |
 | Welke keuzes horen bij een groep en hoe werken ze | `opties.csv` |
 | Welke varianten heeft een keuze en wat kost elke variant | `optiewaarden.csv` |
 | Welke maatgrenzen gelden per model | `maatbereik.csv` |
 
-De varianten die een bezoeker ziet komen dus uit `modellen.csv` voor het model
-zelf en uit `optiewaarden.csv` voor alles daaronder. Een nieuwe stofkleur is één
-regel erbij, een nieuw model is één regel in `modellen.csv` plus de maatgrenzen
-als die afwijken.
+De varianten die een bezoeker ziet komen dus uit `modellen.csv` of
+`varianten.csv` voor het artikel zelf en uit `optiewaarden.csv` voor alles
+daaronder. Een nieuwe stofkleur is één regel erbij, een nieuw model is één regel
+in `modellen.csv` plus de maatgrenzen als die afwijken.
+
+Een groep gebruikt `modellen.csv` of `varianten.csv`, niet allebei. Het verschil
+staat onder "Losse opties of een trap" verderop.
 
 ## instellingen.csv
 
@@ -56,6 +60,7 @@ Eén regel per groep, bijvoorbeeld banken of raamdecoratie.
 | `tekening` | ja | `bank`, `tafel`, `kast` of `raam` |
 | `grondslag` | ja | `breedte` rekent per centimeter breed, `m2` rekent met breedte maal hoogte |
 | `minimum_eenheid` | nee | ondergrens voor de grondslag, bijvoorbeeld `0,6` m2 voor een klein rolgordijn |
+| `trap` | nee | stappen waarmee je naar één artikel klikt, gescheiden door `>`, bijvoorbeeld `Serie>Uitvoering>Bediening`. Ingevuld betekent dat de artikelen in `varianten.csv` staan. |
 | `volgorde` | nee | bepaalt de volgorde van de knoppen, laag getal komt eerst |
 
 Een groep met `grondslag` op `breedte` heeft een optie `breedte` van soort `maat`
@@ -74,10 +79,32 @@ Eén regel per model. Dit zijn de artikelen zoals ze in Speed40 staan.
 | `omschrijving` | nee | regel eronder, bijvoorbeeld `Massief eiken, 6 cm dik` |
 | `basisprijs` | ja | vast bedrag, exclusief btw |
 | `prijs_per_eenheid` | nee | bedrag per centimeter of per m2, afhankelijk van de grondslag van de groep |
+| `tekening_rughoogte` | nee | hoogte van de rug in de tekening, alleen bij de banktekening. Zo ziet een hoge rug er ook hoog uit. |
 | `volgorde` | nee | volgorde van de modellen |
 
 Een bank van 220 cm met basisprijs 1290 en 6,50 per centimeter komt uit op
 1290 plus 220 maal 6,50 is 2720 euro materiaal, waar de opties nog bij komen.
+
+## varianten.csv
+
+Alleen voor groepen met een `trap`. Eén regel per artikel, en dat artikel is het
+eindpunt van een pad. Zo krijgt elke variant zijn eigen code.
+
+| Kolom | Nodig | Betekenis |
+| --- | --- | --- |
+| `groep_id` | ja | verwijst naar een groep waarvan de kolom `trap` gevuld is |
+| `pad` | ja | codes van de stappen met `>` ertussen, evenveel stappen als de trap telt, bijvoorbeeld `relax>hoog>elektrisch` |
+| `pad_namen` | nee | dezelfde stappen als leesbare tekst, bijvoorbeeld `Relax>Hoge rug>Elektrisch`. Leeg laten betekent dat de code op de knop komt. |
+| `artikelcode` | ja | de code van dit ene artikel, gaat mee in de orderregel |
+| `naam` | nee | omschrijving, standaard de stappen achter elkaar |
+| `basisprijs` | ja | vast bedrag, exclusief btw |
+| `prijs_per_eenheid` | nee | bedrag per centimeter of per m2 |
+| `tekening_rughoogte` | nee | zie `modellen.csv` |
+| `volgorde` | nee | volgorde binnen een stap |
+
+Niet elk pad hoeft te bestaan. In de demo heeft de lounge geen elektrische
+versie, dus die knop verschijnt daar niet. Twee artikelen met hetzelfde pad
+kunnen niet, dat meldt het script.
 
 ## opties.csv
 
@@ -100,6 +127,7 @@ werkt en welke andere kolommen je invult.
 | `gratis_tot` | nee | aantal stuks dat niets kost, bijvoorbeeld twee legplanken inbegrepen |
 | `alleen_bij_model` | nee | artikelcodes met een `|` ertussen, de optie verschijnt alleen daarbij |
 | `alleen_bij` | nee | `optie_id=waarde` of `optie_id=waarde|waarde`, de optie verschijnt alleen bij die keuze |
+| `alleen_bij_trap` | nee | `niveau=waarde`, de optie verschijnt alleen bij die stap in de trap, bijvoorbeeld `bediening=elektrisch` voor een accupakket |
 
 Wat er in `standaard` hoort:
 
@@ -146,6 +174,7 @@ komen. Dit is de vertaling.
 | Lijst | Waar het in het ERP vandaan komt |
 | --- | --- |
 | `modellen.csv` | artikelstam, met artikelnummer, omschrijving en verkoopprijs |
+| `varianten.csv` | de artikelen onder een trap, met hun plek in de groepenstructuur |
 | `opties.csv` | de kenmerken of variantgroepen die aan een artikelgroep hangen |
 | `optiewaarden.csv` | de toegestane waarden per kenmerk, met hun toeslag |
 | `maatbereik.csv` | de maatgrenzen per artikel |
@@ -154,6 +183,44 @@ komen. Dit is de vertaling.
 Laat de API die lijsten samenvoegen tot dezelfde JSON en de configurator leest
 hem rechtstreeks. Dan hoef je hier niets meer te draaien en is een prijswijziging
 in Speed40 meteen zichtbaar in het formulier.
+
+## Losse opties of een trap
+
+Beide manieren werken en ze kunnen naast elkaar in dezelfde catalogus staan. Het
+verschil zit in wat een variant is.
+
+Een trap past wanneer een variant echt een eigen artikel is. Denk aan een eigen
+inkoopprijs, een eigen leveranciersnummer, een eigen levertijd of voorraad, of
+een eigen barcode. De code van het blad is dan het unieke kenmerk en alles in
+Speed40 hangt daaraan.
+
+Opties passen wanneer een keuze alleen de prijs of het uiterlijk verandert. Een
+stofgroep, een kleur, een greep of een motor hoort daarbij. Ze reizen als kenmerk
+mee op de orderregel, met hun code, dus inkoop en productie kunnen er nog steeds
+op sturen.
+
+Maten horen altijd bij de opties. Een bank van 140 tot 340 cm in stappen van tien
+levert eenentwintig maten op. Zet je die in de trap, dan heb je met vier
+stofgroepen, zes kleuren en drie soorten poten al 1512 artikelen voor één model,
+en raakt elke prijswijziging ze allemaal.
+
+Een praktische verdeling:
+
+| Hoort in de trap | Hoort bij de opties |
+| --- | --- |
+| serie of collectie | breedte, hoogte, diepte |
+| uitvoering die de constructie verandert | stofgroep, kleur, greep |
+| bediening of aandrijving | toeslagen zoals een motor of verlichting |
+| materiaalsoort met een eigen inkooporder | montage en service |
+
+Houd de trap op drie tot vier stappen. Daaronder wordt doorklikken vervelend voor
+degene die erachter staat.
+
+Wil je toch per verkochte combinatie een unieke code, dan hoef je die niet
+allemaal in de catalogus te zetten. De order bevat de artikelcode plus alle
+optiecodes, dus Speed40 kan de definitieve code bij ontvangst samenstellen of
+aanmaken. Dan houd je een beheersbare catalogus en toch een uniek artikel per
+verkochte variant.
 
 ## Een variant toevoegen
 
@@ -170,7 +237,8 @@ behalve die met een `alleen_bij_model` waar de nieuwe code niet in staat.
 ## Minimaal per productgroep
 
 - een regel in `productgroepen.csv` met een tekening en een grondslag
-- minstens één model met een basisprijs
+- minstens één artikel met een basisprijs, in `modellen.csv` of, bij een trap, in
+  `varianten.csv` met een volledig pad
 - een optie `breedte` van soort `maat`, en bij `m2` ook `hoogte`
 - per optie van soort `keuze` of `kleur` minstens één waarde, met een standaard
   die daadwerkelijk bestaat

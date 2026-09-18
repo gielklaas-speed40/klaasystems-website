@@ -139,6 +139,12 @@ bij een fout het bestand en de regel. De kolommen staan in
 
 ### Velden van de catalogus
 
+Een groep kan op twee manieren in elkaar zitten. Of er staan modellen in
+`modellen.csv` en bepalen de opties de uitvoering, of elke variant is een eigen
+artikel en klik je er via een trap naartoe. In dat tweede geval staat de trap in
+de kolom `trap` van `productgroepen.csv` en staan de artikelen in
+`varianten.csv`, elk met zijn eigen pad. De fauteuils in de demo werken zo.
+
 `grondslag` is `breedte` of `m2`. Bij `breedte` rekent de groep met de breedte in
 centimeters, bij `m2` met breedte maal hoogte gedeeld door tienduizend. Met
 `minimumEenheid` zet je een ondergrens, bijvoorbeeld 0,6 m2 voor een klein

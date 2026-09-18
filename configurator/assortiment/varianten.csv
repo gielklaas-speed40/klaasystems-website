@@ -1,0 +1,9 @@
+groep_id;pad;pad_namen;artikelcode;naam;omschrijving;basisprijs;prijs_per_eenheid;tekening_rughoogte;volgorde
+fauteuil;lounge>standaard>handbediend;Lounge>Standaard>Handbediend;FTL-LNG-STD-HND;Lounge, standaard;;640;5,4;46;10
+fauteuil;lounge>hoog>handbediend;Lounge>Hoge rug>Handbediend;FTL-LNG-HOG-HND;Lounge, hoge rug;;720;5,4;64;20
+fauteuil;relax>standaard>handbediend;Relax>Standaard>Handbediend;FTL-REL-STD-HND;Relax, standaard;;890;6,2;46;30
+fauteuil;relax>standaard>elektrisch;Relax>Standaard>Elektrisch;FTL-REL-STD-ELK;Relax, standaard, elektrisch;;1190;6,2;46;40
+fauteuil;relax>hoog>handbediend;Relax>Hoge rug>Handbediend;FTL-REL-HOG-HND;Relax, hoge rug;;980;6,2;64;50
+fauteuil;relax>hoog>elektrisch;Relax>Hoge rug>Elektrisch;FTL-REL-HOG-ELK;Relax, hoge rug, elektrisch;;1290;6,2;64;60
+fauteuil;draai>standaard>handbediend;Draaifauteuil>Standaard>Handbediend;FTL-DRA-STD-HND;Draaifauteuil;;860;5,8;46;70
+fauteuil;draai>standaard>elektrisch;Draaifauteuil>Standaard>Elektrisch;FTL-DRA-STD-ELK;Draaifauteuil, elektrisch;;1150;5,8;46;80

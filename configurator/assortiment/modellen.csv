@@ -1,14 +1,14 @@
-groep_id;artikelcode;naam;omschrijving;basisprijs;prijs_per_eenheid;volgorde
-bank;BNK-LNG;Lounge;Losse kussens, lage rug;1290;6,5;10
-bank;BNK-MOD;Modulair;Per element uit te breiden;1690;8,2;20
-bank;BNK-KLS;Klassiek;Gecapitonneerde rug, hoge zit;1890;7,4;30
-eettafel;TFL-BST;Boomstamblad;Massief eiken, 6 cm dik;980;9,2;10
-eettafel;TFL-STK;Strak blad;Fineer op onderconstructie;620;5,4;20
-eettafel;TFL-KER;Keramiek;12 mm keramiek op stalen frame;1240;11,5;30
-kast;KST-SCH;Schuifdeurkast;Twee lopers, zachte aanslag;1150;7,8;10
-kast;KST-DRA;Draaideurkast;Scharnieren met demping;890;6,2;20
-kast;KST-DRS;Dressoir;Lage kast, vrijstaand;560;4,6;30
-raamdecoratie;RAM-ROL;Rolgordijn;Cassette of open systeem;55;74;10
-raamdecoratie;RAM-PLI;Plissé;Boven en onder verstelbaar;85;128;20
-raamdecoratie;RAM-JAL;Houten jaloezie 50 mm;Lamellen van abachihout;105;158;30
-raamdecoratie;RAM-VOU;Vouwgordijn;Gestikte banen, strijkvrij;130;172;40
+groep_id;artikelcode;naam;omschrijving;basisprijs;prijs_per_eenheid;tekening_rughoogte;volgorde
+bank;BNK-LNG;Lounge;Losse kussens, lage rug;1290;6,5;;10
+bank;BNK-MOD;Modulair;Per element uit te breiden;1690;8,2;;20
+bank;BNK-KLS;Klassiek;Gecapitonneerde rug, hoge zit;1890;7,4;;30
+eettafel;TFL-BST;Boomstamblad;Massief eiken, 6 cm dik;980;9,2;;10
+eettafel;TFL-STK;Strak blad;Fineer op onderconstructie;620;5,4;;20
+eettafel;TFL-KER;Keramiek;12 mm keramiek op stalen frame;1240;11,5;;30
+kast;KST-SCH;Schuifdeurkast;Twee lopers, zachte aanslag;1150;7,8;;10
+kast;KST-DRA;Draaideurkast;Scharnieren met demping;890;6,2;;20
+kast;KST-DRS;Dressoir;Lage kast, vrijstaand;560;4,6;;30
+raamdecoratie;RAM-ROL;Rolgordijn;Cassette of open systeem;55;74;;10
+raamdecoratie;RAM-PLI;Plissé;Boven en onder verstelbaar;85;128;;20
+raamdecoratie;RAM-JAL;Houten jaloezie 50 mm;Lamellen van abachihout;105;158;;30
+raamdecoratie;RAM-VOU;Vouwgordijn;Gestikte banen, strijkvrij;130;172;;40

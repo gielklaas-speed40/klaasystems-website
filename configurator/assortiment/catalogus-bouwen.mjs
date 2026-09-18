@@ -72,6 +72,9 @@ function nummer(rij, kolom) {
   if (isNaN(n)) { fout(rij._bestand, rij._regel, "kolom " + kolom + " is geen getal: " + rauw); return undefined; }
   return n;
 }
+function slug(tekst) {
+  return String(tekst).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 function jaNee(rij, kolom) {
   const v = String(rij[kolom] || "").toLowerCase();
   if (v === "") return false;
@@ -86,10 +89,13 @@ const instellingen = {};
 leesCsv("instellingen.csv", false).forEach((r) => { instellingen[String(r.sleutel || "").toLowerCase()] = r.waarde; });
 
 const rijenGroepen = leesCsv("productgroepen.csv", true);
-const rijenModellen = leesCsv("modellen.csv", true);
+const rijenModellen = leesCsv("modellen.csv", false);
+const rijenVarianten = leesCsv("varianten.csv", false);
 const rijenOpties = leesCsv("opties.csv", true);
 const rijenWaarden = leesCsv("optiewaarden.csv", true);
 const rijenBereik = leesCsv("maatbereik.csv", false);
+
+if (!rijenModellen.length && !rijenVarianten.length) fouten.push("er staat niets in modellen.csv en niets in varianten.csv");
 
 const SOORTEN = ["maat", "keuze", "kleur", "schakelaar", "aantal"];
 const TEKENINGEN = ["bank", "tafel", "kast", "raam"];
@@ -117,6 +123,10 @@ rijenGroepen
       modellen: [],
       opties: []
     };
+    if (r.trap) {
+      g.trap = r.trap.split(">").map((naam) => naam.trim()).filter(Boolean).map((naam) => ({ id: slug(naam), naam: naam }));
+      if (!g.trap.length) fout(r._bestand, r._regel, "trap is ingevuld maar leeg na het splitsen op >");
+    }
     perGroep[g.id] = g;
     groepen.push(g);
   });
@@ -139,7 +149,52 @@ rijenModellen
       perEenheid: nummer(r, "prijs_per_eenheid") || 0,
       omschrijving: r.omschrijving || undefined
     };
+    const rug = nummer(r, "tekening_rughoogte");
+    if (rug !== undefined) m.rugHoogte = rug;
+    if (g.trap) fout(r._bestand, r._regel, "groep " + g.id + " heeft een trap, zet het artikel in varianten.csv");
     perModel[r.artikelcode] = { model: m, groep: g.id };
+    g.modellen.push(m);
+  });
+
+/* Varianten, oftewel de bladeren van de trap. Elk pad is een eigen artikel. */
+const padLabels = {};
+rijenVarianten
+  .sort((a, b) => (Number(a.volgorde || 0) || 0) - (Number(b.volgorde || 0) || 0))
+  .forEach((r) => {
+    const g = perGroep[r.groep_id];
+    if (!g) return fout(r._bestand, r._regel, "onbekende groep_id " + r.groep_id);
+    if (!g.trap) return fout(r._bestand, r._regel, "groep " + g.id + " heeft geen trap, vul de kolom trap in productgroepen.csv of zet het artikel in modellen.csv");
+    if (!r.artikelcode) return fout(r._bestand, r._regel, "artikelcode is leeg");
+    if (perModel[r.artikelcode]) return fout(r._bestand, r._regel, "artikelcode " + r.artikelcode + " staat er al");
+    const pad = String(r.pad || "").split(">").map((d) => d.trim()).filter(Boolean);
+    if (pad.length !== g.trap.length) {
+      return fout(r._bestand, r._regel, "pad heeft " + pad.length + " stappen, de trap van " + g.id + " heeft er " + g.trap.length + ": " + g.trap.map((n) => n.naam).join(", "));
+    }
+    const namen = String(r.pad_namen || "").split(">").map((d) => d.trim()).filter(Boolean);
+    if (namen.length && namen.length !== pad.length) fout(r._bestand, r._regel, "pad_namen heeft niet evenveel stappen als pad");
+    const padNamen = pad.map((code, i) => namen[i] || code);
+    pad.forEach((code, i) => {
+      const sleutel = g.id + "." + i + "." + code;
+      if (padLabels[sleutel] && padLabels[sleutel] !== padNamen[i]) {
+        waarschuwingen.push(r._bestand + " regel " + r._regel + ": " + code + " heet op niveau " + g.trap[i].naam + " ook " + padLabels[sleutel] + ", de eerste naam blijft staan");
+      } else {
+        padLabels[sleutel] = padNamen[i];
+      }
+    });
+    const basis = nummer(r, "basisprijs");
+    if (basis === undefined) fout(r._bestand, r._regel, "basisprijs is leeg");
+    const m = {
+      code: r.artikelcode,
+      naam: r.naam || padNamen.join(", "),
+      pad: pad,
+      padNamen: pad.map((code, i) => padLabels[g.id + "." + i + "." + code] || padNamen[i]),
+      basis: basis || 0,
+      perEenheid: nummer(r, "prijs_per_eenheid") || 0,
+      omschrijving: r.omschrijving || undefined
+    };
+    const rug = nummer(r, "tekening_rughoogte");
+    if (rug !== undefined) m.rugHoogte = rug;
+    perModel[r.artikelcode] = { model: m, groep: g.id, pad: pad };
     g.modellen.push(m);
   });
 
@@ -203,6 +258,15 @@ rijenOpties
       });
     }
 
+    if (r.alleen_bij_trap) {
+      o.alleenBijTrap = {};
+      r.alleen_bij_trap.split(",").forEach((deel) => {
+        const [niveau, waardeLijst] = deel.split("=");
+        if (!niveau || !waardeLijst) return fout(r._bestand, r._regel, "alleen_bij_trap verwacht niveau=waarde of niveau=waarde|waarde");
+        o.alleenBijTrap[slug(niveau.trim())] = waardeLijst.split("|").map((w) => w.trim()).filter(Boolean);
+      });
+    }
+
     perOptie[sleutel] = { optie: o, rij: r };
     g.opties.push(o);
   });
@@ -259,7 +323,15 @@ rijenBereik.forEach((r) => {
 
 /* Laatste controles */
 groepen.forEach((g) => {
-  if (!g.modellen.length) fouten.push("groep " + g.id + " heeft geen enkel model in modellen.csv");
+  if (!g.modellen.length) fouten.push("groep " + g.id + " heeft geen enkel artikel in " + (g.trap ? "varianten.csv" : "modellen.csv"));
+  if (g.trap) {
+    const paden = {};
+    g.modellen.forEach((m) => {
+      const sleutel = m.pad.join(">");
+      if (paden[sleutel]) fouten.push("varianten.csv: pad " + sleutel + " komt twee keer voor in groep " + g.id + ", bij " + paden[sleutel] + " en " + m.code);
+      else paden[sleutel] = m.code;
+    });
+  }
   if (g.grondslag === "m2") {
     ["breedte", "hoogte"].forEach((nodig) => {
       if (!g.opties.some((o) => o.id === nodig && o.type === "maat")) {
@@ -279,6 +351,21 @@ groepen.forEach((g) => {
         waarschuwingen.push(rij._bestand + " regel " + rij._regel + ": geen standaard ingevuld, de configurator kiest " + o.keuzes[0].code);
       } else if (!o.keuzes.some((k) => k.code === o.standaard)) {
         fout(rij._bestand, rij._regel, "standaard " + o.standaard + " komt niet voor in optiewaarden.csv");
+      }
+    }
+    if (o.alleenBijTrap) {
+      if (!g.trap) {
+        fout(rij._bestand, rij._regel, "alleen_bij_trap werkt alleen bij een groep met een trap");
+      } else {
+        Object.keys(o.alleenBijTrap).forEach((niveauId) => {
+          const i = g.trap.findIndex((n) => n.id === niveauId);
+          if (i === -1) return fout(rij._bestand, rij._regel, "alleen_bij_trap verwijst naar onbekend niveau " + niveauId + ", de trap heeft " + g.trap.map((n) => n.id).join(", "));
+          o.alleenBijTrap[niveauId].forEach((w) => {
+            if (!g.modellen.some((m) => m.pad && m.pad[i] === w)) {
+              fout(rij._bestand, rij._regel, "alleen_bij_trap waarde " + w + " komt op niveau " + g.trap[i].naam + " in geen enkel pad voor");
+            }
+          });
+        });
       }
     }
     if (o.alleenBij) {
@@ -327,5 +414,5 @@ const aantalWaarden = groepen.reduce((n, g) => n + g.opties.reduce((m, o) => m +
 console.log("Catalogus " + catalogus.versie + " geschreven naar " + UIT);
 console.log(groepen.length + " productgroepen, " + Object.keys(perModel).length + " modellen, " + aantalOpties + " opties, " + aantalWaarden + " optiewaarden");
 groepen.forEach((g) => {
-  console.log("  " + g.id + ": " + g.modellen.length + " modellen, " + g.opties.length + " opties, rekent op " + (g.grondslag === "m2" ? "m2" : "breedte"));
+  console.log("  " + g.id + ": " + g.modellen.length + (g.trap ? " varianten in een trap van " + g.trap.length + " stappen, " : " modellen, ") + g.opties.length + " opties, rekent op " + (g.grondslag === "m2" ? "m2" : "breedte"));
 });

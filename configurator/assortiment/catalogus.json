@@ -808,6 +808,318 @@
           "standaard": false
         }
       ]
+    },
+    {
+      "id": "fauteuil",
+      "naam": "Fauteuils",
+      "enkelvoud": "Fauteuil",
+      "tekening": "bank",
+      "grondslag": "breedte",
+      "modellen": [
+        {
+          "code": "FTL-LNG-STD-HND",
+          "naam": "Lounge, standaard",
+          "pad": [
+            "lounge",
+            "standaard",
+            "handbediend"
+          ],
+          "padNamen": [
+            "Lounge",
+            "Standaard",
+            "Handbediend"
+          ],
+          "basis": 640,
+          "perEenheid": 5.4,
+          "rugHoogte": 46
+        },
+        {
+          "code": "FTL-LNG-HOG-HND",
+          "naam": "Lounge, hoge rug",
+          "pad": [
+            "lounge",
+            "hoog",
+            "handbediend"
+          ],
+          "padNamen": [
+            "Lounge",
+            "Hoge rug",
+            "Handbediend"
+          ],
+          "basis": 720,
+          "perEenheid": 5.4,
+          "rugHoogte": 64
+        },
+        {
+          "code": "FTL-REL-STD-HND",
+          "naam": "Relax, standaard",
+          "pad": [
+            "relax",
+            "standaard",
+            "handbediend"
+          ],
+          "padNamen": [
+            "Relax",
+            "Standaard",
+            "Handbediend"
+          ],
+          "basis": 890,
+          "perEenheid": 6.2,
+          "rugHoogte": 46
+        },
+        {
+          "code": "FTL-REL-STD-ELK",
+          "naam": "Relax, standaard, elektrisch",
+          "pad": [
+            "relax",
+            "standaard",
+            "elektrisch"
+          ],
+          "padNamen": [
+            "Relax",
+            "Standaard",
+            "Elektrisch"
+          ],
+          "basis": 1190,
+          "perEenheid": 6.2,
+          "rugHoogte": 46
+        },
+        {
+          "code": "FTL-REL-HOG-HND",
+          "naam": "Relax, hoge rug",
+          "pad": [
+            "relax",
+            "hoog",
+            "handbediend"
+          ],
+          "padNamen": [
+            "Relax",
+            "Hoge rug",
+            "Handbediend"
+          ],
+          "basis": 980,
+          "perEenheid": 6.2,
+          "rugHoogte": 64
+        },
+        {
+          "code": "FTL-REL-HOG-ELK",
+          "naam": "Relax, hoge rug, elektrisch",
+          "pad": [
+            "relax",
+            "hoog",
+            "elektrisch"
+          ],
+          "padNamen": [
+            "Relax",
+            "Hoge rug",
+            "Elektrisch"
+          ],
+          "basis": 1290,
+          "perEenheid": 6.2,
+          "rugHoogte": 64
+        },
+        {
+          "code": "FTL-DRA-STD-HND",
+          "naam": "Draaifauteuil",
+          "pad": [
+            "draai",
+            "standaard",
+            "handbediend"
+          ],
+          "padNamen": [
+            "Draaifauteuil",
+            "Standaard",
+            "Handbediend"
+          ],
+          "basis": 860,
+          "perEenheid": 5.8,
+          "rugHoogte": 46
+        },
+        {
+          "code": "FTL-DRA-STD-ELK",
+          "naam": "Draaifauteuil, elektrisch",
+          "pad": [
+            "draai",
+            "standaard",
+            "elektrisch"
+          ],
+          "padNamen": [
+            "Draaifauteuil",
+            "Standaard",
+            "Elektrisch"
+          ],
+          "basis": 1150,
+          "perEenheid": 5.8,
+          "rugHoogte": 46
+        }
+      ],
+      "opties": [
+        {
+          "id": "breedte",
+          "naam": "Zitbreedte",
+          "groep": "Maatvoering",
+          "type": "maat",
+          "min": 70,
+          "max": 110,
+          "stap": 5,
+          "standaard": 85,
+          "eenheid": "cm"
+        },
+        {
+          "id": "armleuning",
+          "naam": "Armleuning",
+          "groep": "Maatvoering",
+          "type": "keuze",
+          "standaard": "smal",
+          "keuzes": [
+            {
+              "code": "smal",
+              "naam": "Smal",
+              "prijs": 0
+            },
+            {
+              "code": "breed",
+              "naam": "Breed",
+              "prijs": 60
+            }
+          ]
+        },
+        {
+          "id": "stofgroep",
+          "naam": "Stofgroep",
+          "groep": "Bekleding",
+          "type": "keuze",
+          "standaard": "B",
+          "keuzes": [
+            {
+              "code": "A",
+              "naam": "Groep A",
+              "factor": 1
+            },
+            {
+              "code": "B",
+              "naam": "Groep B",
+              "factor": 1.12
+            },
+            {
+              "code": "C",
+              "naam": "Groep C",
+              "factor": 1.28
+            },
+            {
+              "code": "LDR",
+              "naam": "Leer",
+              "factor": 1.65
+            }
+          ]
+        },
+        {
+          "id": "kleur",
+          "naam": "Kleur",
+          "groep": "Bekleding",
+          "type": "kleur",
+          "standaard": "antraciet",
+          "keuzes": [
+            {
+              "code": "zand",
+              "naam": "Zand",
+              "hex": "#D9CCB8"
+            },
+            {
+              "code": "olijf",
+              "naam": "Olijf",
+              "hex": "#6E7A5C"
+            },
+            {
+              "code": "antraciet",
+              "naam": "Antraciet",
+              "hex": "#3B4046"
+            },
+            {
+              "code": "roest",
+              "naam": "Roest",
+              "hex": "#9C5A3C"
+            },
+            {
+              "code": "krijt",
+              "naam": "Krijtwit",
+              "hex": "#E8E3DA"
+            }
+          ]
+        },
+        {
+          "id": "poten",
+          "naam": "Poten",
+          "groep": "Uitvoering",
+          "type": "keuze",
+          "standaard": "metaal",
+          "keuzes": [
+            {
+              "code": "metaal",
+              "naam": "Metaal zwart",
+              "prijs": 0
+            },
+            {
+              "code": "eiken",
+              "naam": "Eiken",
+              "prijs": 65
+            }
+          ]
+        },
+        {
+          "id": "draaiplateau",
+          "naam": "Draaiplateau met terugloop",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 145,
+          "standaard": false,
+          "alleenBijTrap": {
+            "serie": [
+              "draai"
+            ]
+          }
+        },
+        {
+          "id": "hoofdsteun",
+          "naam": "Verstelbare hoofdsteun",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 165,
+          "standaard": false,
+          "alleenBijTrap": {
+            "bediening": [
+              "elektrisch"
+            ]
+          }
+        },
+        {
+          "id": "accu",
+          "naam": "Accupakket, zonder snoer",
+          "groep": "Uitvoering",
+          "type": "schakelaar",
+          "prijs": 210,
+          "standaard": false,
+          "alleenBijTrap": {
+            "bediening": [
+              "elektrisch"
+            ]
+          }
+        }
+      ],
+      "trap": [
+        {
+          "id": "serie",
+          "naam": "Serie"
+        },
+        {
+          "id": "uitvoering",
+          "naam": "Uitvoering"
+        },
+        {
+          "id": "bediening",
+          "naam": "Bediening"
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,6 @@
-groep_id;naam;enkelvoud;tekening;grondslag;minimum_eenheid;volgorde
-bank;Banken;Bank;bank;breedte;;10
-eettafel;Eettafels;Eettafel;tafel;breedte;;20
-kast;Kasten;Kast;kast;breedte;;30
-raamdecoratie;Raamdecoratie;Raamdecoratie;raam;m2;0,6;40
+groep_id;naam;enkelvoud;tekening;grondslag;minimum_eenheid;trap;volgorde
+bank;Banken;Bank;bank;breedte;;;10
+eettafel;Eettafels;Eettafel;tafel;breedte;;;20
+kast;Kasten;Kast;kast;breedte;;;30
+raamdecoratie;Raamdecoratie;Raamdecoratie;raam;m2;0,6;;40
+fauteuil;Fauteuils;Fauteuil;bank;breedte;;Serie>Uitvoering>Bediening;50

@@ -204,6 +204,15 @@
   }
   .btn-tweede:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .btn-tweede.mini { font-size: 0.8rem; padding: 5px 10px; margin-top: 8px; }
+  .artikelregel {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    font-size: 0.86rem; color: var(--muted);
+    background: var(--surface-2); border-radius: 8px; padding: 9px 12px;
+  }
+  .artikelregel code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86rem; font-weight: 600; color: var(--ink);
+  }
   .knoprij { display: flex; gap: 8px; flex-wrap: wrap; }
 
   table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
@@ -441,6 +450,11 @@
             <li><code>aantal</code> voor stuks, zoals legplanken of lades, met een prijs per stuk.</li>
           </ul>
 
+          <h3>Twee manieren om bij een product te komen</h3>
+          <p>Bij banken, tafels, kasten en raamdecoratie staat één model in de catalogus en bepalen de opties de uitvoering. Bij fauteuils werkt het andersom. Daar is elke variant een eigen artikel met een eigen code, en klik je via serie, uitvoering en bediening naar beneden tot er één artikel overblijft. De configurator laat alleen stappen zien die daadwerkelijk bestaan, dus een lounge zonder elektrische versie toont die knop niet.</p>
+          <p>Welke van de twee past hangt af van wat het artikel is. Heeft een variant een eigen inkoopprijs, leveranciersnummer of voorraad, dan hoort hij in de trap. Verandert een keuze alleen de prijs of het uiterlijk, zoals een stofgroep of een kleur, dan is een optie handiger. Een maat hoort altijd bij de opties, want breedte van 140 tot 340 in stappen van tien zou in een trap meteen eenentwintig artikelen opleveren.</p>
+          <p>De twee kunnen door elkaar in dezelfde catalogus. Bij de fauteuils zie je dat terug: de trap bepaalt het artikel, de stof, de kleur en de zitbreedte gaan als kenmerk mee op de orderregel. De order krijgt dan zowel de artikelcode als het pad waarlangs die gekozen is.</p>
+
           <h3>Hoe de prijs opgebouwd wordt</h3>
           <p>Een productgroep rekent op breedte in centimeters of op oppervlakte in vierkante meters. Het model levert een basisbedrag plus een bedrag per eenheid. Daarna werken factoren zoals stofgroep of doeksoort op dat materiaalbedrag, en komen de toeslagen van de opties erbovenop. Die rekenregels staan in de catalogus als velden, niet in de code, dus een andere staffel of een prijsverhoging is een wijziging in de database.</p>
           <p>Klantspecifieke prijzen horen aan de Speed40-kant. De configurator vraagt de catalogus op voor een debiteur, en krijgt dan de prijzen terug die voor die klant gelden. De pagina rekent alleen door wat hij binnenkrijgt.</p>
@@ -669,6 +683,55 @@ const DEMO_CATALOGUS = {
         { id: "cassette", naam: "Cassette", groep: "Uitvoering", type: "schakelaar", prijs: 58, standaard: false },
         { id: "inmeten", naam: "Inmeetservice", groep: "Uitvoering", type: "schakelaar", prijs: 45, standaard: false }
       ]
+    },
+    {
+      id: "fauteuil",
+      naam: "Fauteuils",
+      enkelvoud: "Fauteuil",
+      tekening: "bank",
+      grondslag: "breedte",
+      trap: [
+        { id: "serie", naam: "Serie" },
+        { id: "uitvoering", naam: "Uitvoering" },
+        { id: "bediening", naam: "Bediening" }
+      ],
+      modellen: [
+        { code: "FTL-LNG-STD-HND", naam: "Lounge, standaard", pad: ["lounge", "standaard", "handbediend"], padNamen: ["Lounge", "Standaard", "Handbediend"], basis: 640, perEenheid: 5.4 , rugHoogte: 46 },
+        { code: "FTL-LNG-HOG-HND", naam: "Lounge, hoge rug", pad: ["lounge", "hoog", "handbediend"], padNamen: ["Lounge", "Hoge rug", "Handbediend"], basis: 720, perEenheid: 5.4 , rugHoogte: 64 },
+        { code: "FTL-REL-STD-HND", naam: "Relax, standaard", pad: ["relax", "standaard", "handbediend"], padNamen: ["Relax", "Standaard", "Handbediend"], basis: 890, perEenheid: 6.2 , rugHoogte: 46 },
+        { code: "FTL-REL-STD-ELK", naam: "Relax, standaard, elektrisch", pad: ["relax", "standaard", "elektrisch"], padNamen: ["Relax", "Standaard", "Elektrisch"], basis: 1190, perEenheid: 6.2 , rugHoogte: 46 },
+        { code: "FTL-REL-HOG-HND", naam: "Relax, hoge rug", pad: ["relax", "hoog", "handbediend"], padNamen: ["Relax", "Hoge rug", "Handbediend"], basis: 980, perEenheid: 6.2 , rugHoogte: 64 },
+        { code: "FTL-REL-HOG-ELK", naam: "Relax, hoge rug, elektrisch", pad: ["relax", "hoog", "elektrisch"], padNamen: ["Relax", "Hoge rug", "Elektrisch"], basis: 1290, perEenheid: 6.2 , rugHoogte: 64 },
+        { code: "FTL-DRA-STD-HND", naam: "Draaifauteuil", pad: ["draai", "standaard", "handbediend"], padNamen: ["Draaifauteuil", "Standaard", "Handbediend"], basis: 860, perEenheid: 5.8 , rugHoogte: 46 },
+        { code: "FTL-DRA-STD-ELK", naam: "Draaifauteuil, elektrisch", pad: ["draai", "standaard", "elektrisch"], padNamen: ["Draaifauteuil", "Standaard", "Elektrisch"], basis: 1150, perEenheid: 5.8 , rugHoogte: 46 }
+      ],
+      opties: [
+        { id: "breedte", naam: "Zitbreedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 70, max: 110, stap: 5, standaard: 85 },
+        { id: "armleuning", naam: "Armleuning", groep: "Maatvoering", type: "keuze", standaard: "smal", keuzes: [
+          { code: "smal", naam: "Smal", prijs: 0 },
+          { code: "breed", naam: "Breed", prijs: 60 }
+        ]},
+        { id: "stofgroep", naam: "Stofgroep", groep: "Bekleding", type: "keuze", standaard: "B", keuzes: [
+          { code: "A", naam: "Groep A", factor: 1 },
+          { code: "B", naam: "Groep B", factor: 1.12 },
+          { code: "C", naam: "Groep C", factor: 1.28 },
+          { code: "LDR", naam: "Leer", factor: 1.65 }
+        ]},
+        { id: "kleur", naam: "Kleur", groep: "Bekleding", type: "kleur", standaard: "antraciet", keuzes: [
+          { code: "zand", naam: "Zand", hex: "#D9CCB8" },
+          { code: "olijf", naam: "Olijf", hex: "#6E7A5C" },
+          { code: "antraciet", naam: "Antraciet", hex: "#3B4046" },
+          { code: "roest", naam: "Roest", hex: "#9C5A3C" },
+          { code: "krijt", naam: "Krijtwit", hex: "#E8E3DA" }
+        ]},
+        { id: "poten", naam: "Poten", groep: "Uitvoering", type: "keuze", standaard: "metaal", keuzes: [
+          { code: "metaal", naam: "Metaal zwart", prijs: 0 },
+          { code: "eiken", naam: "Eiken", prijs: 65 }
+        ]},
+        { id: "draaiplateau", naam: "Draaiplateau met terugloop", groep: "Uitvoering", type: "schakelaar", prijs: 145, standaard: false, alleenBijTrap: { serie: ["draai"] } },
+        { id: "hoofdsteun", naam: "Verstelbare hoofdsteun", groep: "Uitvoering", type: "schakelaar", prijs: 165, standaard: false, alleenBijTrap: { bediening: ["elektrisch"] } },
+        { id: "accu", naam: "Accupakket, zonder snoer", groep: "Uitvoering", type: "schakelaar", prijs: 210, standaard: false, alleenBijTrap: { bediening: ["elektrisch"] } }
+      ]
     }
   ]
 };
@@ -736,12 +799,47 @@ function bereikVan(optie, cfg) {
   };
 }
 
-function zichtbaar(optie, cfg) {
+/* Pad van het gekozen model door de trap, bijvoorbeeld relax, hoog, elektrisch. */
+function padVan(groep, cfg) {
+  if (!groep || !groep.trap) return [];
+  const m = modelVan(groep, cfg.model);
+  return (m && m.pad) || [];
+}
+
+/* Waarden die op dit niveau nog overblijven, gegeven de keuzes erboven. */
+function trapWaarden(groep, pad, niveau) {
+  const uit = [];
+  groep.modellen.forEach((m) => {
+    if (!m.pad) return;
+    for (let i = 0; i < niveau; i++) if (m.pad[i] !== pad[i]) return;
+    if (uit.some((w) => w.code === m.pad[niveau])) return;
+    uit.push({ code: m.pad[niveau], naam: (m.padNamen && m.padNamen[niveau]) || m.pad[niveau] });
+  });
+  return uit;
+}
+
+/* Een stap kiezen. Diepere niveaus schuiven mee naar het eerste model dat past. */
+function kiesTrap(groep, cfg, niveau, code) {
+  const pad = padVan(groep, cfg).slice(0, niveau);
+  pad.push(code);
+  const m = groep.modellen.find((k) => k.pad && pad.every((p, i) => k.pad[i] === p));
+  if (m) cfg.model = m.code;
+}
+
+function zichtbaar(optie, cfg, groep) {
   if (optie.alleenBijModel && optie.alleenBijModel.indexOf(cfg.model) === -1) return false;
   if (optie.alleenBij) {
     for (const sleutel in optie.alleenBij) {
       const toegestaan = [].concat(optie.alleenBij[sleutel]);
       if (toegestaan.indexOf(cfg[sleutel]) === -1) return false;
+    }
+  }
+  if (optie.alleenBijTrap && groep && groep.trap) {
+    const pad = padVan(groep, cfg);
+    for (const niveauId in optie.alleenBijTrap) {
+      const i = groep.trap.findIndex((n) => n.id === niveauId);
+      const toegestaan = [].concat(optie.alleenBijTrap[niveauId]);
+      if (i === -1 || toegestaan.indexOf(pad[i]) === -1) return false;
     }
   }
   return true;
@@ -813,7 +911,7 @@ function bereken(groep, cfg) {
 
   let toeslagen = 0;
   groep.opties.forEach((o) => {
-    if (!zichtbaar(o, cfg)) return;
+    if (!zichtbaar(o, cfg, groep)) return;
     if (o.type === "keuze" || o.type === "kleur") {
       const k = keuzeVan(o, cfg[o.id]);
       if (!k) return;
@@ -852,8 +950,15 @@ function bereken(groep, cfg) {
 
 function kenmerkenVan(groep, cfg) {
   const uit = [];
+  if (groep.trap) {
+    const pad = padVan(groep, cfg);
+    const model = modelVan(groep, cfg.model);
+    groep.trap.forEach((n, i) => {
+      uit.push({ code: n.id, naam: n.naam, waarde_code: pad[i], waarde: (model.padNamen && model.padNamen[i]) || pad[i] });
+    });
+  }
   groep.opties.forEach((o) => {
-    if (!zichtbaar(o, cfg)) return;
+    if (!zichtbaar(o, cfg, groep)) return;
     if (o.type === "keuze" || o.type === "kleur") {
       const k = keuzeVan(o, cfg[o.id]);
       if (k) uit.push({ code: o.id, naam: o.naam, waarde_code: k.code, waarde: k.naam });
@@ -871,7 +976,7 @@ function kenmerkenVan(groep, cfg) {
 function omschrijvingVan(groep, cfg) {
   const model = modelVan(groep, cfg.model);
   const maten = [];
-  groep.opties.forEach((o) => { if (o.type === "maat" && zichtbaar(o, cfg)) maten.push(cfg[o.id]); });
+  groep.opties.forEach((o) => { if (o.type === "maat" && zichtbaar(o, cfg, groep)) maten.push(cfg[o.id]); });
   const maat = maten.length ? maten.join(" x ") + " cm" : "";
   return [groep.enkelvoud || groep.naam, model.naam, maat].filter(Boolean).join(", ");
 }
@@ -914,13 +1019,13 @@ function tekenBank(groep, cfg) {
   const B = cfg.breedte;
   const arm = cfg.armleuning === "breed" ? 26 : cfg.armleuning === "geen" ? 0 : 14;
   const ph = cfg.poten === "blok" ? 8 : cfg.poten === "eiken" ? 16 : 14;
-  const rugH = cfg.model === "BNK-KLS" ? 50 : 43;
+  const rugH = modelVan(groep, cfg.model).rugHoogte || (cfg.model === "BNK-KLS" ? 50 : 43);
   const H = rugH + 45;
   const kleur = kleurVan(groep, cfg);
   const rugKleur = mengen(kleur, 0.82);
   const armKleur = mengen(kleur, 0.9);
   const basisKleur = mengen(kleur, 0.68);
-  const chaise = cfg.opstelling !== "recht" ? Math.min(100, Math.max(70, Math.round(B * 0.33))) : 0;
+  const chaise = cfg.opstelling && cfg.opstelling !== "recht" ? Math.min(100, Math.max(70, Math.round(B * 0.33))) : 0;
   const chaiseLinks = cfg.opstelling === "chaise-links";
   const rugVan = chaise && chaiseLinks ? chaise : 0;
   const rugTot = chaise && !chaiseLinks ? B - chaise : B;
@@ -941,7 +1046,7 @@ function tekenBank(groep, cfg) {
     for (let i = 0; i < n; i++) vakken.push([rest[0] + (restB / n) * i, rest[0] + (restB / n) * (i + 1)]);
     if (!chaiseLinks) vakken.push([B - chaise, B]);
   } else {
-    const n = Math.max(2, Math.min(5, Math.round((zitTot - zitVan) / 70)));
+    const n = zitTot - zitVan < 120 ? 1 : Math.max(2, Math.min(5, Math.round((zitTot - zitVan) / 70)));
     for (let i = 0; i < n; i++) vakken.push([zitVan + ((zitTot - zitVan) / n) * i, zitVan + ((zitTot - zitVan) / n) * (i + 1)]);
   }
   vakken.forEach((v) => {
@@ -1054,7 +1159,7 @@ function tekenKast(groep, cfg) {
         const y = 6 + (ruimte / (planken + 1)) * j + (cfg.roede ? 22 : 0);
         if (y < onder - 4) s += rect(x + 2, y, w - 4, 1.6, mengen(kleur, 0.85));
       }
-      if (cfg.roede && zichtbaar(groep.opties.find((o) => o.id === "roede") || {}, cfg)) {
+      if (cfg.roede && zichtbaar(groep.opties.find((o) => o.id === "roede") || {}, cfg, groep)) {
         s += lijn(x + 3, 14, x + w - 3, 14, ' stroke-width="1.6"');
         for (let j = 0; j < Math.max(2, Math.round(w / 18)); j++) {
           const hx = x + 6 + j * ((w - 12) / Math.max(1, Math.round(w / 18) - 1 || 1));
@@ -1169,16 +1274,34 @@ function renderCats() {
 function renderOpties() {
   const groep = huidigeGroep();
   const cfg = configOpschonen(groep, configVan(groep));
-  let h = '<div class="groep"><h2>Model</h2><p class="groep-uitleg">' + esc(groep.naam) + " uit de catalogus, versie " + esc(catalogus.versie) + '.</p><div class="keuzes">';
-  h += groep.modellen.map((m) =>
-    '<button type="button" data-veld="model" data-waarde="' + esc(m.code) + '" aria-pressed="' + (m.code === cfg.model) + '">' +
-    esc(m.naam) + (m.omschrijving ? '<br><span class="meer">' + esc(m.omschrijving) + "</span>" : "") + "</button>"
-  ).join("");
-  h += "</div></div>";
+  let h = '<div class="groep"><h2>' + (groep.trap ? "Product" : "Model") + '</h2><p class="groep-uitleg">' + esc(groep.naam) + " uit de catalogus, versie " + esc(catalogus.versie) + ".</p>";
+  if (groep.trap) {
+    const pad = padVan(groep, cfg);
+    h += '<div class="velden">';
+    groep.trap.forEach((niveau, i) => {
+      const waarden = trapWaarden(groep, pad, i);
+      h += '<div class="veld"><div class="veld-kop"><span class="veld-naam">' + esc(niveau.naam) + "</span>" +
+        (waarden.length > 1 ? '<span class="veld-waarde">' + waarden.length + " mogelijk</span>" : "") + "</div>";
+      h += '<div class="keuzes">' + waarden.map((w) =>
+        '<button type="button" data-trap="' + i + '" data-waarde="' + esc(w.code) + '" aria-pressed="' + (w.code === pad[i]) + '">' + esc(w.naam) + "</button>"
+      ).join("") + "</div></div>";
+    });
+    const model = modelVan(groep, cfg.model);
+    h += '<div class="artikelregel"><span>Artikel in Speed40</span><code>' + esc(model.code) + "</code></div>";
+    h += "</div>";
+  } else {
+    h += '<div class="keuzes">';
+    h += groep.modellen.map((m) =>
+      '<button type="button" data-veld="model" data-waarde="' + esc(m.code) + '" aria-pressed="' + (m.code === cfg.model) + '">' +
+      esc(m.naam) + (m.omschrijving ? '<br><span class="meer">' + esc(m.omschrijving) + "</span>" : "") + "</button>"
+    ).join("");
+    h += "</div>";
+  }
+  h += "</div>";
 
   const groepen = [];
   groep.opties.forEach((o) => {
-    if (!zichtbaar(o, cfg)) return;
+    if (!zichtbaar(o, cfg, groep)) return;
     const naam = o.groep || "Opties";
     let g = groepen.find((x) => x.naam === naam);
     if (!g) { g = { naam: naam, opties: [] }; groepen.push(g); }
@@ -1286,6 +1409,7 @@ function toevoegenAanOrder() {
     id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     groepId: groep.id,
     artikelcode: cfg.model,
+    pad: padVan(groep, cfg),
     omschrijving: omschrijvingVan(groep, cfg),
     kenmerken: kenmerkenVan(groep, cfg),
     cfg: cfg,
@@ -1369,6 +1493,7 @@ function payloadBouwen() {
       regeltotaal_excl: regelTotaal(r),
       btw_percentage: catalogus.btw || 21,
       configuratie_id: r.id,
+      productpad: r.pad && r.pad.length ? r.pad : undefined,
       kenmerken: r.kenmerken
     })),
     totalen: { excl_btw: t.excl, btw: t.btw, incl_btw: t.incl }
@@ -1560,6 +1685,18 @@ $("#cats").addEventListener("click", (e) => {
 });
 
 $("#opties").addEventListener("click", (e) => {
+  const stap = e.target.closest("button[data-trap]");
+  if (stap) {
+    const groep = huidigeGroep();
+    const cfg = configVan(groep);
+    kiesTrap(groep, cfg, Number(stap.dataset.trap), stap.dataset.waarde);
+    configOpschonen(groep, cfg);
+    bewaren();
+    renderOpties();
+    renderPreview();
+    renderOpzet();
+    return;
+  }
   const knop = e.target.closest("button[data-veld]");
   if (!knop) return;
   const groep = huidigeGroep();
