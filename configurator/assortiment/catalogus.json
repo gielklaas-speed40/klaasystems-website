@@ -956,7 +956,7 @@
       "opties": [
         {
           "id": "breedte",
-          "naam": "Zitbreedte",
+          "naam": "Breedte",
           "groep": "Maatvoering",
           "type": "maat",
           "min": 70,

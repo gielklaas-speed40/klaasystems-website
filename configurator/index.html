@@ -174,7 +174,24 @@
 
   aside.preview { position: sticky; top: 14px; display: grid; gap: 14px; }
   @media (max-width: 900px) { aside.preview { position: static; } }
+  .weergave { display: flex; gap: 4px; margin-bottom: 10px; }
+  .weergave button {
+    font: inherit; font-size: 0.84rem; font-weight: 600;
+    color: var(--muted); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 5px 14px; cursor: pointer;
+  }
+  .weergave button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .weergave button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   .tekening { background: var(--surface-2); border-radius: 10px; padding: 8px; }
+  .tekening3d { background: var(--surface-2); border-radius: 10px; overflow: hidden; }
+  .tekening3d canvas {
+    display: block; width: 100%; height: 300px;
+    touch-action: none; cursor: grab;
+  }
+  .tekening3d canvas:active { cursor: grabbing; }
+  #knoppen3d { margin-top: 10px; }
   .tekening svg { width: 100%; height: auto; display: block; }
   .tekening-bijschrift { font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: center; }
 
@@ -292,8 +309,17 @@
       <div class="card" id="opties"></div>
       <aside class="preview">
         <div class="card">
+          <div class="weergave" role="group" aria-label="Weergave">
+            <button type="button" data-weergave="2d" aria-pressed="true">Tekening</button>
+            <button type="button" data-weergave="3d" aria-pressed="false">3D</button>
+          </div>
           <div class="tekening" id="tekening"></div>
+          <div class="tekening3d" id="tekening3d" hidden><canvas id="doek3d"></canvas></div>
           <div class="tekening-bijschrift" id="tekening-bijschrift"></div>
+          <div class="knoprij" id="knoppen3d" hidden>
+            <button class="btn-tweede" id="btn-3d-herstel">Rechtop zetten</button>
+            <button class="btn-tweede" id="btn-3d-opslaan">3D-model opslaan</button>
+          </div>
         </div>
         <div class="card">
           <div class="regels" id="prijsregels"></div>
@@ -449,6 +475,10 @@
             <li><code>schakelaar</code> voor ja of nee, met een vaste meerprijs of een meerprijs per eenheid.</li>
             <li><code>aantal</code> voor stuks, zoals legplanken of lades, met een prijs per stuk.</li>
           </ul>
+
+          <h3>De tekening en het 3D-model</h3>
+          <p>Boven de afbeelding staat een schakelaar tussen tekening en 3D. Allebei komen ze uit dezelfde maten, dus een bank van 340 cm is in beide breder dan een van 160, en de gekozen stofkleur is ook de kleur van het 3D-model. Een productgroep wijst met het veld <code>tekening</code> naar een vorm, en die vorm levert zowel de tekening als het model.</p>
+          <p>Met de knop onder de weergave komt er een glb-bestand uit de configuratie, in meters en met een materiaal per kleur. Dat bestand opent in Blender, in de 3D-viewer van Windows en in de meeste webshop-viewers, dus dezelfde configurator kan een showroom of een webshop van beeldmateriaal voorzien.</p>
 
           <h3>Twee manieren om bij een product te komen</h3>
           <p>Bij banken, tafels, kasten en raamdecoratie staat één model in de catalogus en bepalen de opties de uitvoering. Bij fauteuils werkt het andersom. Daar is elke variant een eigen artikel met een eigen code, en klik je via serie, uitvoering en bediening naar beneden tot er één artikel overblijft. De configurator laat alleen stappen zien die daadwerkelijk bestaan, dus een lounge zonder elektrische versie toont die knop niet.</p>
@@ -706,7 +736,7 @@ const DEMO_CATALOGUS = {
         { code: "FTL-DRA-STD-ELK", naam: "Draaifauteuil, elektrisch", pad: ["draai", "standaard", "elektrisch"], padNamen: ["Draaifauteuil", "Standaard", "Elektrisch"], basis: 1150, perEenheid: 5.8 , rugHoogte: 46 }
       ],
       opties: [
-        { id: "breedte", naam: "Zitbreedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 70, max: 110, stap: 5, standaard: 85 },
+        { id: "breedte", naam: "Breedte", groep: "Maatvoering", type: "maat", eenheid: "cm", min: 70, max: 110, stap: 5, standaard: 85 },
         { id: "armleuning", naam: "Armleuning", groep: "Maatvoering", type: "keuze", standaard: "smal", keuzes: [
           { code: "smal", naam: "Smal", prijs: 0 },
           { code: "breed", naam: "Breed", prijs: 60 }
@@ -753,6 +783,7 @@ const staat = {
   groepId: catalogus.groepen[0].id,
   configs: {},
   aantal: 1,
+  weergave: "2d",
   order: [],
   klant: { naam: "", klantnummer: "", email: "", telefoon: "", referentie: "", leverweek: "", opmerking: "" },
   koppeling: {
@@ -1364,6 +1395,7 @@ function renderPreview() {
   const p = bereken(groep, cfg);
   $("#tekening").innerHTML = tekening(groep, cfg);
   $("#tekening-bijschrift").textContent = omschrijvingVan(groep, cfg);
+  if (typeof werkDriedeeBij === "function") werkDriedeeBij(true);
   $("#prijsregels").innerHTML = p.regels.map((r) =>
     '<div class="' + (r.sub ? "sub" : "") + '"><span>' + esc(r.label) + '</span><span class="bedrag">' + (r.bedrag < 0 ? "" : "+") + euro(r.bedrag) + "</span></div>"
   ).join("");
@@ -1612,11 +1644,7 @@ async function catalogusLaden() {
 
 function catalogusExport() {
   const blob = new Blob([JSON.stringify(catalogus, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "catalogus-" + (catalogus.versie || "export") + ".json";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  bewaarBestand(blob, "catalogus-" + (catalogus.versie || "export") + ".json", "Catalogus opgeslagen");
 }
 
 /* ------------------------------------------------------------------
@@ -1627,7 +1655,7 @@ function bewaren() {
   try {
     localStorage.setItem(OPSLAG, JSON.stringify({
       groepId: staat.groepId, configs: staat.configs, order: staat.order,
-      klant: staat.klant, koppeling: staat.koppeling
+      klant: staat.klant, koppeling: staat.koppeling, weergave: staat.weergave
     }));
     sessionStorage.setItem(SLEUTEL_OPSLAG, staat.sleutel || "");
   } catch (e) { /* privémodus, dan werkt de demo zonder onthouden */ }
@@ -1643,9 +1671,40 @@ function herstellen() {
       if (d.klant) staat.klant = Object.assign(staat.klant, d.klant);
       if (d.koppeling) staat.koppeling = Object.assign(staat.koppeling, d.koppeling);
       if (d.groepId && catalogus.groepen.some((g) => g.id === d.groepId)) staat.groepId = d.groepId;
+      if (d.weergave === "3d" || d.weergave === "2d") staat.weergave = d.weergave;
     }
     staat.sleutel = sessionStorage.getItem(SLEUTEL_OPSLAG) || "";
   } catch (e) { /* niets hersteld, verder met de standaardwaarden */ }
+}
+
+/* Opslaan werkt lokaal via een gewone downloadlink. Draait de pagina als
+   gepubliceerde preview, dan gaat het via de viewer, die alleen bepaalde
+   bestandstypen doorlaat. */
+async function bewaarBestand(blob, bestandsnaam, gelukt) {
+  let viewer = null;
+  try {
+    if (window.claude && typeof window.claude.use === "function") viewer = await window.claude.use("downloads");
+  } catch (e) {
+    viewer = null;
+  }
+  if (viewer) {
+    try {
+      await viewer.save({ filename: bestandsnaam, data: blob });
+      melden(gelukt);
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "declined") melden("Opslaan afgebroken");
+      else if (code === "rejected_extension" || code === "extension_not_enabled") melden("Dit bestand kun je alleen vanaf de lokale versie opslaan");
+      else melden("Opslaan lukt hier niet");
+    }
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = bestandsnaam;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  melden(gelukt);
 }
 
 let meldingTimer = null;
@@ -1662,14 +1721,738 @@ function melden(tekst) {
 "use strict";
 
 /* ------------------------------------------------------------------
+   3D-weergave
+
+   Dezelfde configuratie die de tekening voedt, bouwt hier een model van
+   dozen op ware grootte in centimeters. Er zit geen bibliotheek onder, de
+   weergave gaat rechtstreeks via WebGL. Met "3D-model opslaan" komt er een
+   glb-bestand uit dat je in Blender, SketchUp of een webshop kunt openen.
+------------------------------------------------------------------- */
+
+/* Matrixhulpjes, kolomsgewijs zoals WebGL ze wil. */
+function matMaal(a, b) {
+  const uit = new Float32Array(16);
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      let som = 0;
+      for (let k = 0; k < 4; k++) som += a[i + k * 4] * b[k + j * 4];
+      uit[i + j * 4] = som;
+    }
+  }
+  return uit;
+}
+function matPerspectief(fovGraden, verhouding, dichtbij, ver) {
+  const f = 1 / Math.tan((fovGraden * Math.PI) / 360);
+  return new Float32Array([
+    f / verhouding, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (ver + dichtbij) / (dichtbij - ver), -1,
+    0, 0, (2 * ver * dichtbij) / (dichtbij - ver), 0
+  ]);
+}
+function normaliseer(v) {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+function kruis(a, b) {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+function matKijk(oog, doel) {
+  const z = normaliseer([oog[0] - doel[0], oog[1] - doel[1], oog[2] - doel[2]]);
+  const x = normaliseer(kruis([0, 1, 0], z));
+  const y = kruis(z, x);
+  return new Float32Array([
+    x[0], y[0], z[0], 0,
+    x[1], y[1], z[1], 0,
+    x[2], y[2], z[2], 0,
+    -(x[0] * oog[0] + x[1] * oog[1] + x[2] * oog[2]),
+    -(y[0] * oog[0] + y[1] * oog[1] + y[2] * oog[2]),
+    -(z[0] * oog[0] + z[1] * oog[1] + z[2] * oog[2]),
+    1
+  ]);
+}
+
+/* Kleur uit de catalogus naar drie getallen tussen nul en een. */
+function kleurGetal(hex, factor) {
+  const rgb = hexNaarRgb(hex).map((c) => {
+    const f = factor === undefined ? 1 : factor;
+    const w = f < 1 ? c * f : c + (255 - c) * (f - 1);
+    return Math.max(0, Math.min(255, w)) / 255;
+  });
+  return rgb;
+}
+
+/* ---- Modelopbouw ---- */
+
+function nieuwModel() { return { delen: [] }; }
+
+function deelVan(model, kleur, alpha) {
+  const a = alpha === undefined ? 1 : alpha;
+  const sleutel = kleur.join(",") + "|" + a;
+  let deel = model.delen.find((d) => d.sleutel === sleutel);
+  if (!deel) {
+    deel = { sleutel: sleutel, kleur: kleur, alpha: a, pos: [], nor: [], idx: [] };
+    model.delen.push(deel);
+  }
+  return deel;
+}
+
+const ZIJDEN = [
+  { n: [0, 0, 1], h: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },
+  { n: [0, 0, -1], h: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
+  { n: [1, 0, 0], h: [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]] },
+  { n: [-1, 0, 0], h: [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]] },
+  { n: [0, 1, 0], h: [[0, 1, 1], [1, 1, 1], [1, 1, 0], [0, 1, 0]] },
+  { n: [0, -1, 0], h: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]] }
+];
+
+/* Doos met de hoek linksonderachter op x, y, z en maten b, h, d in centimeters. */
+function doos(model, kleur, x, y, z, b, h, d, opties) {
+  const o = opties || {};
+  const deel = deelVan(model, kleur, o.alpha);
+  const mx = x + b / 2, my = y + h / 2, mz = z + d / 2;
+  const az = ((o.draaiZ || 0) * Math.PI) / 180;
+  const ax = ((o.draaiX || 0) * Math.PI) / 180;
+  const cz = Math.cos(az), sz = Math.sin(az), cx = Math.cos(ax), sx = Math.sin(ax);
+
+  function draai(p) {
+    let vx = p[0] - mx, vy = p[1] - my, vz = p[2] - mz;
+    if (az) { const t = vx * cz - vy * sz; vy = vx * sz + vy * cz; vx = t; }
+    if (ax) { const t = vy * cx - vz * sx; vz = vy * sx + vz * cx; vy = t; }
+    return [vx + mx, vy + my, vz + mz];
+  }
+  function draaiNormaal(n) {
+    let nx = n[0], ny = n[1], nz = n[2];
+    if (az) { const t = nx * cz - ny * sz; ny = nx * sz + ny * cz; nx = t; }
+    if (ax) { const t = ny * cx - nz * sx; nz = ny * sx + nz * cx; ny = t; }
+    return [nx, ny, nz];
+  }
+
+  ZIJDEN.forEach((zijde) => {
+    const start = deel.pos.length / 3;
+    const n = draaiNormaal(zijde.n);
+    zijde.h.forEach((hoek) => {
+      const p = draai([x + hoek[0] * b, y + hoek[1] * h, z + hoek[2] * d]);
+      deel.pos.push(p[0], p[1], p[2]);
+      deel.nor.push(n[0], n[1], n[2]);
+    });
+    deel.idx.push(start, start + 1, start + 2, start, start + 2, start + 3);
+  });
+}
+
+function omvang(model) {
+  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  model.delen.forEach((d) => {
+    for (let i = 0; i < d.pos.length; i += 3) {
+      for (let a = 0; a < 3; a++) {
+        if (d.pos[i + a] < min[a]) min[a] = d.pos[i + a];
+        if (d.pos[i + a] > max[a]) max[a] = d.pos[i + a];
+      }
+    }
+  });
+  if (min[0] === Infinity) return { min: [0, 0, 0], max: [1, 1, 1], midden: [0, 0, 0], straal: 1 };
+  const midden = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
+  const straal = Math.max(0.5, Math.hypot(max[0] - min[0], max[1] - min[1], max[2] - min[2]) / 2);
+  return { min: min, max: max, midden: midden, straal: straal };
+}
+
+/* ---- De producten ---- */
+
+function diepteVan(groep, cfg, standaard) {
+  const optie = groep.opties.find((o) => o.id === "diepte");
+  if (!optie) return standaard;
+  const code = String(cfg[optie.id] || "");
+  const n = parseInt(code.replace(/\D/g, ""), 10);
+  return isNaN(n) ? standaard : n;
+}
+
+function bouwBank(model, groep, cfg) {
+  const hex = kleurVan(groep, cfg);
+  const stof = kleurGetal(hex);
+  const kussen = kleurGetal(hex, 1.07);
+  const frame = kleurGetal(hex, 0.7);
+  const B = cfg.breedte;
+  const D = diepteVan(groep, cfg, 95);
+  const arm = cfg.armleuning === "breed" ? 26 : cfg.armleuning === "geen" ? 0 : 14;
+  const ph = cfg.poten === "blok" ? 8 : cfg.poten === "eiken" ? 16 : 14;
+  const rugH = modelVan(groep, cfg.model).rugHoogte || (cfg.model === "BNK-KLS" ? 50 : 43);
+  const chaise = cfg.opstelling && cfg.opstelling !== "recht" ? Math.min(100, Math.max(70, Math.round(B * 0.33))) : 0;
+  const chaiseLinks = cfg.opstelling === "chaise-links";
+  const zitTop = ph + 26;
+  const kussenDik = 14;
+  const rugDik = 16;
+
+  doos(model, frame, -B / 2 + arm, ph, -D / 2 + 1, B - 2 * arm, 26, D - 2);
+  if (chaise) {
+    const cx = chaiseLinks ? -B / 2 + arm : B / 2 - chaise;
+    doos(model, frame, cx, ph, D / 2 - 1, chaise - arm, 26, 56);
+  }
+
+  const zitVan = chaise && chaiseLinks ? -B / 2 : -B / 2 + arm;
+  const zitTot = chaise && !chaiseLinks ? B / 2 : B / 2 - arm;
+  const vakken = [];
+  if (chaise) {
+    const rest = chaiseLinks ? [-B / 2 + chaise, zitTot] : [zitVan, B / 2 - chaise];
+    const restB = rest[1] - rest[0];
+    const n = Math.max(1, Math.min(4, Math.round(restB / 70)));
+    if (chaiseLinks) vakken.push([-B / 2, -B / 2 + chaise, true]);
+    for (let i = 0; i < n; i++) vakken.push([rest[0] + (restB / n) * i, rest[0] + (restB / n) * (i + 1), false]);
+    if (!chaiseLinks) vakken.push([B / 2 - chaise, B / 2, true]);
+  } else {
+    const n = zitTot - zitVan < 120 ? 1 : Math.max(2, Math.min(5, Math.round((zitTot - zitVan) / 70)));
+    for (let i = 0; i < n; i++) vakken.push([zitVan + ((zitTot - zitVan) / n) * i, zitVan + ((zitTot - zitVan) / n) * (i + 1), false]);
+  }
+
+  vakken.forEach((v) => {
+    const diepte = v[2] ? D + 55 - rugDik - 2 : D - rugDik - 2;
+    doos(model, kussen, v[0] + 1, zitTop, -D / 2 + rugDik, v[1] - v[0] - 2, kussenDik, diepte);
+    if (!v[2]) {
+      doos(model, stof, v[0] + 1, zitTop + kussenDik, -D / 2 + 2, v[1] - v[0] - 2, rugH, rugDik);
+    }
+  });
+
+  if (arm) {
+    const armH = zitTop + kussenDik + (cfg.armleuning === "breed" ? 16 : 12);
+    doos(model, stof, -B / 2, ph, -D / 2, arm, armH - ph, D);
+    doos(model, stof, B / 2 - arm, ph, -D / 2, arm, armH - ph, D);
+  }
+
+  const potHex = cfg.poten === "eiken" ? "#C9A97B" : cfg.poten === "blok" ? hex : "#2E3134";
+  const potKleur = cfg.poten === "blok" ? kleurGetal(potHex, 0.55) : kleurGetal(potHex);
+  if (cfg.poten === "blok") {
+    doos(model, potKleur, -B / 2 + 6, 0, -D / 2 + 6, B - 12, ph, D - 12);
+  } else {
+    const plek = [[-B / 2 + 6, -D / 2 + 6], [B / 2 - 12, -D / 2 + 6], [-B / 2 + 6, D / 2 - 12], [B / 2 - 12, D / 2 - 12]];
+    plek.forEach((p) => doos(model, potKleur, p[0], 0, p[1], 6, ph, 6));
+    if (chaise) {
+      const cx = chaiseLinks ? -B / 2 + 6 : B / 2 - 12;
+      doos(model, potKleur, cx, 0, D / 2 + 40, 6, ph, 6);
+    }
+  }
+}
+
+function bouwTafel(model, groep, cfg) {
+  const hex = kleurVan(groep, cfg);
+  const blad = kleurGetal(hex);
+  const frame = kleurGetal("#3A3D40");
+  const B = cfg.breedte;
+  const D = diepteVan(groep, cfg, 100);
+  const dik = cfg.model === "TFL-BST" ? 6 : cfg.model === "TFL-KER" ? 2.4 : 4;
+  const H = 76;
+
+  doos(model, blad, -B / 2, H - dik, -D / 2, B, dik, D);
+  if (cfg.verlengbaar) {
+    doos(model, kleurGetal(hex, 1.06), -B / 2 - 50, H - dik, -D / 2, 50, dik, D);
+    doos(model, kleurGetal(hex, 1.06), B / 2, H - dik, -D / 2, 50, dik, D);
+  }
+  if (cfg.rand === "boomstam") {
+    doos(model, kleurGetal(hex, 0.86), -B / 2, H - dik - 1.2, -D / 2 - 1.5, B, 1.2, 1.5);
+    doos(model, kleurGetal(hex, 0.86), -B / 2, H - dik - 1.2, D / 2, B, 1.2, 1.5);
+  }
+
+  const x1 = -B / 2 + 14, x2 = B / 2 - 18;
+  if (cfg.onderstel === "u-frame") {
+    [x1, x2].forEach((x) => {
+      doos(model, frame, x, 0, -D / 2 + 12, 4, H - dik, D - 24);
+      doos(model, frame, x - 6, 0, -D / 2 + 8, 16, 3, D - 16);
+    });
+  } else if (cfg.onderstel === "matrix") {
+    [x1, x2].forEach((x) => {
+      doos(model, frame, x, 0, -D / 2 + 10, 3, H - dik, 3);
+      doos(model, frame, x, 0, D / 2 - 13, 3, H - dik, 3);
+      doos(model, frame, x, H - dik - 3, -D / 2 + 10, 3, 3, D - 23);
+      doos(model, frame, x, (H - dik) / 2, -D / 2 + 10, 3, 3, D - 23);
+      doos(model, frame, x, 0, -D / 2 + 10, 3, 3, D - 23);
+    });
+  } else if (cfg.onderstel === "spider") {
+    [[-B * 0.22, -D * 0.22, 16, 16], [B * 0.22, -D * 0.22, -16, 16], [-B * 0.22, D * 0.22, 16, -16], [B * 0.22, D * 0.22, -16, -16]].forEach((p) => {
+      doos(model, frame, p[0] - 2.5, 0, p[1] - 2.5, 5, H - dik, 5, { draaiZ: p[2] * 0.5, draaiX: -p[3] * 0.5 });
+    });
+    doos(model, frame, -12, H - dik - 4, -12, 24, 4, 24);
+  } else {
+    [x1, x2].forEach((x) => {
+      doos(model, frame, x - 2, 0, -D / 2 + 14, 4, H - dik, 4, { draaiX: 22 });
+      doos(model, frame, x - 2, 0, D / 2 - 18, 4, H - dik, 4, { draaiX: -22 });
+    });
+    doos(model, frame, x1, H - dik - 5, -4, x2 - x1 + 4, 4, 8);
+  }
+}
+
+function bouwKast(model, groep, cfg) {
+  const hex = kleurVan(groep, cfg);
+  const front = kleurGetal(hex);
+  const korpus = kleurGetal(hex, 0.62);
+  const binnen = kleurGetal(hex, 0.5);
+  const beslag = kleurGetal("#2E3134");
+  const B = cfg.breedte, H = cfg.hoogte;
+  const D = diepteVan(groep, cfg, 60);
+  const plint = cfg.model === "KST-DRS" ? 12 : 6;
+  const n = Math.max(1, cfg.deuren || 2);
+  const plaat = 2;
+
+  doos(model, korpus, -B / 2 + 4, 0, -D / 2 + 4, B - 8, plint, D - 8);
+  doos(model, binnen, -B / 2, plint, -D / 2, B, H - plint, plaat);
+  doos(model, korpus, -B / 2, plint, -D / 2, plaat, H - plint, D);
+  doos(model, korpus, B / 2 - plaat, plint, -D / 2, plaat, H - plint, D);
+  doos(model, korpus, -B / 2, plint, -D / 2, B, plaat, D);
+  doos(model, korpus, -B / 2, H - plaat, -D / 2, B, plaat, D);
+
+  const vakB = B / n;
+  for (let i = 1; i < n; i++) {
+    doos(model, korpus, -B / 2 + i * vakB - plaat / 2, plint, -D / 2, plaat, H - plint, D);
+  }
+
+  for (let i = 0; i < n; i++) {
+    const x = -B / 2 + i * vakB;
+    if (i === n - 1) {
+      const lades = cfg.lades || 0;
+      let onder = plint + plaat;
+      for (let j = 0; j < lades; j++) {
+        const lh = Math.min(20, (H - plint - 20) / Math.max(4, lades));
+        doos(model, front, x + plaat, onder, D / 2 - 3, vakB - plaat * 2, lh - 1, 3);
+        doos(model, binnen, x + plaat, onder, -D / 2 + plaat, vakB - plaat * 2, lh - 1, D - 6);
+        onder += lh;
+      }
+      const planken = cfg.legplanken || 0;
+      const roede = cfg.roede && zichtbaar(groep.opties.find((o) => o.id === "roede") || {}, cfg, groep);
+      const bovenGrens = H - plaat - (roede ? 24 : 4);
+      const ruimte = bovenGrens - onder;
+      for (let j = 1; j <= planken; j++) {
+        const y = onder + (ruimte / (planken + 1)) * j;
+        if (y < bovenGrens - 2) doos(model, korpus, x + plaat, y, -D / 2 + plaat, vakB - plaat * 2, plaat, D - plaat - 2);
+      }
+      if (roede) {
+        doos(model, beslag, x + plaat + 2, H - plaat - 14, -2, vakB - plaat * 2 - 4, 2, 2);
+      }
+      if (cfg.verlichting) doos(model, kleurGetal("#F2D98B"), x + plaat, H - plaat - 2, -D / 2 + 6, vakB - plaat * 2, 1.5, 6);
+    } else {
+      const deurB = vakB - 1;
+      const schuif = cfg.model === "KST-SCH" && i % 2 === 0 ? 2 : 0;
+      doos(model, front, x + 0.5, plint + 1, D / 2 - 2 - schuif, deurB, H - plint - plaat - 2, 2);
+      if (cfg.greep === "beugel") {
+        doos(model, beslag, x + deurB - 8, plint + (H - plint) * 0.45, D / 2 - schuif, 3, 18, 2.5);
+      } else if (cfg.greep === "inkeping") {
+        doos(model, kleurGetal(hex, 0.7), x + 2, H - plaat - 5, D / 2 - schuif + 0.2, deurB - 4, 2.5, 1);
+      }
+    }
+  }
+}
+
+function bouwRaam(model, groep, cfg) {
+  const hex = kleurVan(groep, cfg);
+  const doek = kleurGetal(hex);
+  const kozijn = kleurGetal("#E7E4DE");
+  const muur = kleurGetal("#D8D6D1");
+  const beslag = kleurGetal("#2E3134");
+  const B = cfg.breedte, H = cfg.hoogte;
+  const opDeDag = cfg.montage === "op-de-dag";
+  const marge = opDeDag ? 10 : 0;
+  const k = 9;
+
+  doos(model, muur, -B / 2 - k - 18, -k - 18, -14, B + 2 * k + 36, 18, 14);
+  doos(model, muur, -B / 2 - k - 18, H + k, -14, B + 2 * k + 36, 18, 14);
+  doos(model, muur, -B / 2 - k - 18, -k, -14, 18, H + 2 * k, 14);
+  doos(model, muur, B / 2 + k, -k, -14, 18, H + 2 * k, 14);
+  doos(model, kozijn, -B / 2 - k, -k, -12, B + 2 * k, k, 12);
+  doos(model, kozijn, -B / 2 - k, H, -12, B + 2 * k, k, 12);
+  doos(model, kozijn, -B / 2 - k, 0, -12, k, H, 12);
+  doos(model, kozijn, B / 2, 0, -12, k, H, 12);
+  doos(model, kleurGetal("#BCD2DF"), -B / 2, 0, -8, B, H, 1.2, { alpha: 0.55 });
+  doos(model, kozijn, -1.5, 0, -8, 3, H, 2);
+  doos(model, kozijn, -B / 2, H / 2 - 1.5, -8, B, 3, 2);
+
+  const bx = -B / 2 - marge, bb = B + marge * 2;
+  const cassette = cfg.cassette ? 8 : 0;
+  let top = H + marge;
+  if (cassette) {
+    doos(model, kleurGetal(hex, 0.75), bx, top - cassette, -2, bb, cassette, 9);
+    top -= cassette;
+  }
+
+  if (cfg.model === "RAM-JAL") {
+    const lamel = 5;
+    for (let y = top - lamel; y > -marge; y -= lamel + 0.8) {
+      doos(model, doek, bx, y, -1, bb, 0.8, 5, { draaiX: 18 });
+    }
+    doos(model, kleurGetal(hex, 0.8), bx, top - 2, -2, bb, 2.5, 6);
+  } else if (cfg.model === "RAM-PLI") {
+    const onder = top - (top + marge) * 0.58;
+    for (let y = top; y > onder; y -= 3.2) {
+      doos(model, doek, bx, y - 3.2, -1, bb, 3.2, 2.6, { draaiX: y % 6.4 < 3.2 ? 16 : -16 });
+    }
+    doos(model, kleurGetal(hex, 0.7), bx, onder - 2.5, -2, bb, 2.5, 4);
+  } else if (cfg.model === "RAM-VOU") {
+    const onder = top - (top + marge) * 0.48;
+    doos(model, doek, bx, onder + 14, -1, bb, top - onder - 14, 1.2);
+    for (let i = 0; i < 3; i++) {
+      doos(model, kleurGetal(hex, 0.94), bx, onder + i * 5, -1 - i * 1.6, bb, 5.5, 3 + i * 1.6);
+    }
+  } else {
+    doos(model, kleurGetal(hex, 0.8), bx, top - 6, -3, bb, 6, 6);
+    const onder = top - (top + marge) * 0.62;
+    doos(model, doek, bx, onder, -1, bb, top - 6 - onder, 1);
+    doos(model, kleurGetal(hex, 0.7), bx, onder - 2.5, -2, bb, 2.5, 3);
+  }
+
+  if (cfg.bediening === "motor" || cfg.bediening === "motor-app") {
+    doos(model, beslag, bx + bb - 12, top - 7, -4, 12, 7, 7);
+  } else {
+    const kx = cfg.bediening === "ketting-links" ? bx + 1 : bx + bb - 2;
+    const lengte = (top + marge) * 0.55;
+    doos(model, beslag, kx, top - lengte, -1, 1, lengte, 1);
+  }
+}
+
+function bouwModel(groep, cfg) {
+  const model = nieuwModel();
+  const soort = groep.tekening || "kast";
+  if (soort === "bank") bouwBank(model, groep, cfg);
+  else if (soort === "tafel") bouwTafel(model, groep, cfg);
+  else if (soort === "raam") bouwRaam(model, groep, cfg);
+  else bouwKast(model, groep, cfg);
+  if (soort === "raam") model.opVloer = false;
+  return model;
+}
+
+/* ---- De weergave ---- */
+
+const VERTEX_BRON = [
+  "attribute vec3 aPositie;",
+  "attribute vec3 aNormaal;",
+  "uniform mat4 uMvp;",
+  "varying vec3 vNormaal;",
+  "void main() {",
+  "  vNormaal = aNormaal;",
+  "  gl_Position = uMvp * vec4(aPositie, 1.0);",
+  "}"
+].join("\n");
+
+const FRAGMENT_BRON = [
+  "precision mediump float;",
+  "varying vec3 vNormaal;",
+  "uniform vec4 uKleur;",
+  "uniform float uBelicht;",
+  "void main() {",
+  "  if (uBelicht < 0.5) { gl_FragColor = uKleur; return; }",
+  "  vec3 n = normalize(vNormaal);",
+  "  float hoofd = max(dot(n, normalize(vec3(0.45, 0.82, 0.55))), 0.0);",
+  "  float vul = max(dot(n, normalize(vec3(-0.6, 0.25, -0.5))), 0.0) * 0.22;",
+  "  float licht = 0.46 + 0.52 * hoofd + vul;",
+  "  gl_FragColor = vec4(uKleur.rgb * licht, uKleur.a);",
+  "}"
+].join("\n");
+
+function maakDriedee(canvas) {
+  const gl = canvas.getContext("webgl", { antialias: true, alpha: true, premultipliedAlpha: false });
+  if (!gl) return null;
+
+  function shader(soort, bron) {
+    const s = gl.createShader(soort);
+    gl.shaderSource(s, bron);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const programma = gl.createProgram();
+  gl.attachShader(programma, shader(gl.VERTEX_SHADER, VERTEX_BRON));
+  gl.attachShader(programma, shader(gl.FRAGMENT_SHADER, FRAGMENT_BRON));
+  gl.linkProgram(programma);
+  if (!gl.getProgramParameter(programma, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(programma));
+  gl.useProgram(programma);
+
+  const aPositie = gl.getAttribLocation(programma, "aPositie");
+  const aNormaal = gl.getAttribLocation(programma, "aNormaal");
+  const uMvp = gl.getUniformLocation(programma, "uMvp");
+  const uKleur = gl.getUniformLocation(programma, "uKleur");
+  const uBelicht = gl.getUniformLocation(programma, "uBelicht");
+  const bufPos = gl.createBuffer(), bufNor = gl.createBuffer(), bufIdx = gl.createBuffer();
+
+  let model = null, maten = null, schaduwModel = null;
+  const camera = { hoek: 0.62, hoogte: 0.3, afstand: 400, doel: [0, 0, 0] };
+  let wachtend = false;
+
+  function schaalKlaar() {
+    const verhouding = window.devicePixelRatio || 1;
+    const b = Math.max(1, Math.round(canvas.clientWidth * verhouding));
+    const h = Math.max(1, Math.round(canvas.clientHeight * verhouding));
+    if (canvas.width !== b || canvas.height !== h) { canvas.width = b; canvas.height = h; }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  function pas() {
+    maten = omvang(model);
+    camera.doel = [0, maten.midden[1], 0];
+    camera.afstand = maten.straal * 2.9;
+    schaduwModel = model.opVloer === false ? null : schaduw();
+  }
+
+  /* Vlek op de vloer onder het product, naar de rand toe doorzichtig. */
+  function schaduw() {
+    const s = nieuwModel();
+    const straalX = (maten.max[0] - maten.min[0]) * 0.62;
+    const straalZ = (maten.max[2] - maten.min[2]) * 0.62;
+    const deel = deelVan(s, [0, 0, 0], 0.16);
+    deel.pos.push(0, 0.4, 0); deel.nor.push(0, 1, 0);
+    const punten = 32;
+    for (let i = 0; i <= punten; i++) {
+      const a = (i / punten) * Math.PI * 2;
+      deel.pos.push(Math.cos(a) * straalX, 0.4, Math.sin(a) * straalZ);
+      deel.nor.push(0, 1, 0);
+      if (i > 0) deel.idx.push(0, i + 1, i);
+    }
+    return s;
+  }
+
+  function tekenDeel(deel, mvp) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufPos);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(deel.pos), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aPositie);
+    gl.vertexAttribPointer(aPositie, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufNor);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(deel.nor), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aNormaal);
+    gl.vertexAttribPointer(aNormaal, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufIdx);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(deel.idx), gl.DYNAMIC_DRAW);
+    gl.uniformMatrix4fv(uMvp, false, mvp);
+    gl.uniform4f(uKleur, deel.kleur[0], deel.kleur[1], deel.kleur[2], deel.alpha);
+    gl.drawElements(gl.TRIANGLES, deel.idx.length, gl.UNSIGNED_SHORT, 0);
+  }
+
+  function teken() {
+    wachtend = false;
+    if (!model) return;
+    schaalKlaar();
+    const oog = [
+      camera.doel[0] + camera.afstand * Math.cos(camera.hoogte) * Math.sin(camera.hoek),
+      camera.doel[1] + camera.afstand * Math.sin(camera.hoogte),
+      camera.doel[2] + camera.afstand * Math.cos(camera.hoogte) * Math.cos(camera.hoek)
+    ];
+    const mvp = matMaal(
+      matPerspectief(34, canvas.width / canvas.height, 5, camera.afstand * 4 + 1000),
+      matKijk(oog, camera.doel)
+    );
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    if (schaduwModel) {
+      gl.uniform1f(uBelicht, 0);
+      gl.depthMask(false);
+      schaduwModel.delen.forEach((d) => tekenDeel(d, mvp));
+      gl.depthMask(true);
+    }
+
+    gl.uniform1f(uBelicht, 1);
+    model.delen.filter((d) => d.alpha >= 1).forEach((d) => tekenDeel(d, mvp));
+    gl.depthMask(false);
+    model.delen.filter((d) => d.alpha < 1).forEach((d) => tekenDeel(d, mvp));
+    gl.depthMask(true);
+  }
+
+  function vraagTeken() {
+    if (wachtend) return;
+    wachtend = true;
+    requestAnimationFrame(teken);
+  }
+
+  /* Slepen om te draaien, wiel om dichterbij te komen. */
+  let sleep = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    sleep = { x: e.clientX, y: e.clientY };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!sleep) return;
+    camera.hoek -= (e.clientX - sleep.x) * 0.01;
+    camera.hoogte = Math.max(-0.2, Math.min(1.25, camera.hoogte + (e.clientY - sleep.y) * 0.006));
+    sleep = { x: e.clientX, y: e.clientY };
+    vraagTeken();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((n) => canvas.addEventListener(n, () => { sleep = null; }));
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    camera.afstand = Math.max(maten ? maten.straal * 1.3 : 60, Math.min(maten ? maten.straal * 7 : 4000, camera.afstand * (1 + Math.sign(e.deltaY) * 0.12)));
+    vraagTeken();
+  }, { passive: false });
+
+  window.addEventListener("resize", vraagTeken);
+
+  return {
+    toon: function (nieuw, behoudStand) {
+      model = nieuw;
+      const stand = { hoek: camera.hoek, hoogte: camera.hoogte };
+      pas();
+      if (behoudStand) { camera.hoek = stand.hoek; camera.hoogte = stand.hoogte; }
+      vraagTeken();
+    },
+    herstel: function () {
+      camera.hoek = 0.62;
+      camera.hoogte = 0.3;
+      if (model) pas();
+      vraagTeken();
+    },
+    opnieuw: vraagTeken
+  };
+}
+
+/* ---- Uitvoer als glb ---- */
+
+function glbVan(model, naam) {
+  const json = {
+    asset: { version: "2.0", generator: "Klaasystems configurator" },
+    scene: 0,
+    scenes: [{ name: naam || "configuratie", nodes: [] }],
+    nodes: [],
+    meshes: [],
+    materials: [],
+    accessors: [],
+    bufferViews: [],
+    buffers: []
+  };
+  const brokken = [];
+  let bytes = 0;
+
+  function voegToe(data, doel) {
+    const uit = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    const vulling = (4 - (bytes % 4)) % 4;
+    if (vulling) { brokken.push(new Uint8Array(vulling)); bytes += vulling; }
+    const index = json.bufferViews.length;
+    json.bufferViews.push({ buffer: 0, byteOffset: bytes, byteLength: uit.byteLength, target: doel });
+    brokken.push(uit);
+    bytes += uit.byteLength;
+    return index;
+  }
+
+  model.delen.forEach((deel, i) => {
+    const pos = new Float32Array(deel.pos.map((v) => v / 100));
+    const nor = new Float32Array(deel.nor);
+    const idx = new Uint32Array(deel.idx);
+    const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    for (let p = 0; p < pos.length; p += 3) {
+      for (let a = 0; a < 3; a++) {
+        if (pos[p + a] < min[a]) min[a] = pos[p + a];
+        if (pos[p + a] > max[a]) max[a] = pos[p + a];
+      }
+    }
+    const vPos = voegToe(pos, 34962), vNor = voegToe(nor, 34962), vIdx = voegToe(idx, 34963);
+    const aPos = json.accessors.length;
+    json.accessors.push({ bufferView: vPos, componentType: 5126, count: pos.length / 3, type: "VEC3", min: min, max: max });
+    const aNor = json.accessors.length;
+    json.accessors.push({ bufferView: vNor, componentType: 5126, count: nor.length / 3, type: "VEC3" });
+    const aIdx = json.accessors.length;
+    json.accessors.push({ bufferView: vIdx, componentType: 5125, count: idx.length, type: "SCALAR" });
+
+    json.materials.push({
+      name: "materiaal" + (i + 1),
+      pbrMetallicRoughness: {
+        baseColorFactor: [deel.kleur[0], deel.kleur[1], deel.kleur[2], deel.alpha],
+        metallicFactor: 0,
+        roughnessFactor: 0.75
+      },
+      alphaMode: deel.alpha < 1 ? "BLEND" : "OPAQUE",
+      doubleSided: true
+    });
+    json.meshes.push({ name: "deel" + (i + 1), primitives: [{ attributes: { POSITION: aPos, NORMAL: aNor }, indices: aIdx, material: i }] });
+    json.nodes.push({ mesh: i, name: "deel" + (i + 1) });
+    json.scenes[0].nodes.push(i);
+  });
+
+  json.buffers.push({ byteLength: bytes });
+
+  let jsonTekst = JSON.stringify(json);
+  while (jsonTekst.length % 4 !== 0) jsonTekst += " ";
+  const jsonBytes = new TextEncoder().encode(jsonTekst);
+  const binLengte = bytes + ((4 - (bytes % 4)) % 4);
+  const totaal = 12 + 8 + jsonBytes.length + 8 + binLengte;
+  const uit = new ArrayBuffer(totaal);
+  const kijk = new DataView(uit);
+  const rij = new Uint8Array(uit);
+
+  kijk.setUint32(0, 0x46546c67, true);
+  kijk.setUint32(4, 2, true);
+  kijk.setUint32(8, totaal, true);
+  kijk.setUint32(12, jsonBytes.length, true);
+  kijk.setUint32(16, 0x4e4f534a, true);
+  rij.set(jsonBytes, 20);
+  let plek = 20 + jsonBytes.length;
+  kijk.setUint32(plek, binLengte, true);
+  kijk.setUint32(plek + 4, 0x004e4942, true);
+  plek += 8;
+  brokken.forEach((b) => { rij.set(b, plek); plek += b.byteLength; });
+
+  return new Blob([uit], { type: "model/gltf-binary" });
+}
+
+</script>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
    Bediening
 ------------------------------------------------------------------- */
+
+let driedee = null;
+let driedeeKapot = false;
+
+function driedeeKlaar() {
+  if (driedee || driedeeKapot) return driedee;
+  try {
+    driedee = maakDriedee($("#doek3d"));
+  } catch (e) {
+    driedee = null;
+  }
+  if (!driedee) driedeeKapot = true;
+  return driedee;
+}
+
+function werkDriedeeBij(behoudStand) {
+  if (staat.weergave !== "3d") return;
+  const d = driedeeKlaar();
+  if (!d) return;
+  const groep = huidigeGroep();
+  d.toon(bouwModel(groep, configVan(groep)), behoudStand !== false);
+}
+
+function weergaveTonen(soort) {
+  const naar3d = soort === "3d";
+  if (naar3d && !driedeeKlaar()) {
+    melden("Deze browser laat geen 3D zien");
+    return;
+  }
+  staat.weergave = naar3d ? "3d" : "2d";
+  document.querySelectorAll(".weergave button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.weergave === staat.weergave)));
+  $("#tekening").hidden = naar3d;
+  $("#tekening3d").hidden = !naar3d;
+  $("#knoppen3d").hidden = !naar3d;
+  if (naar3d) werkDriedeeBij(true);
+  bewaren();
+}
+
+document.querySelectorAll(".weergave button").forEach((b) => {
+  b.addEventListener("click", () => weergaveTonen(b.dataset.weergave));
+});
+
+$("#btn-3d-herstel").addEventListener("click", () => { const d = driedeeKlaar(); if (d) d.herstel(); });
+
+$("#btn-3d-opslaan").addEventListener("click", () => {
+  const groep = huidigeGroep();
+  const cfg = configVan(groep);
+  const blob = glbVan(bouwModel(groep, cfg), omschrijvingVan(groep, cfg));
+  bewaarBestand(blob, (cfg.model || "configuratie") + ".glb", "3D-model opgeslagen als glb");
+});
 
 function schermTonen(naam) {
   document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.scherm === naam)));
   document.querySelectorAll(".scherm").forEach((s) => { s.hidden = s.id !== "scr-" + naam; });
   if (naam === "koppeling") payloadVernieuwen();
   if (naam === "opzet") renderOpzet();
+  if (naam === "configureren" && staat.weergave === "3d") werkDriedeeBij(true);
 }
 
 document.querySelectorAll(".tabs button").forEach((b) => {
@@ -1851,6 +2634,7 @@ $("#c-sleutel").value = staat.sleutel;
 renderConfigurator();
 renderOrder();
 payloadVernieuwen(true);
+if (staat.weergave === "3d") weergaveTonen("3d");
 </script>
 </body>
 </html>

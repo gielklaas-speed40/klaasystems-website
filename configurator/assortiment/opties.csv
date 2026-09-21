@@ -34,7 +34,7 @@ raamdecoratie;kleur;Kleur;Bekleding;kleur;50;;;;;linnen;;;;;;
 raamdecoratie;bediening;Bediening;Uitvoering;keuze;60;;;;;ketting-rechts;;;;;;
 raamdecoratie;cassette;Cassette;Uitvoering;schakelaar;70;;;;;nee;58;;;;;
 raamdecoratie;inmeten;Inmeetservice;Uitvoering;schakelaar;80;;;;;nee;45;;;;;
-fauteuil;breedte;Zitbreedte;Maatvoering;maat;10;cm;70;110;5;85;;;;;;
+fauteuil;breedte;Breedte;Maatvoering;maat;10;cm;70;110;5;85;;;;;;
 fauteuil;armleuning;Armleuning;Maatvoering;keuze;20;;;;;smal;;;;;;
 fauteuil;stofgroep;Stofgroep;Bekleding;keuze;30;;;;;B;;;;;;
 fauteuil;kleur;Kleur;Bekleding;kleur;40;;;;;antraciet;;;;;;

@@ -44,6 +44,33 @@ Instellingen van de bridge:
 | `PORT` | poort van de bridge, standaard 4040 |
 | `CATALOGUS` | pad naar een catalogus-JSON die in spiegelmodus op `/speed40/v1/catalogus` komt te staan |
 
+## 3D-weergave
+
+Boven de tekening staat een schakelaar tussen Tekening en 3D. De 3D-weergave
+bouwt het product op uit dozen op ware grootte, uit dezelfde maten en kleuren als
+de tekening, en tekent dat met WebGL. Er zit geen bibliotheek onder, dus de
+pagina blijft één bestand zonder dependencies. Slepen draait het model, scrollen
+gaat dichterbij, en "Rechtop zetten" brengt de camera terug.
+
+Met "3D-model opslaan" komt er een glb-bestand uit de huidige configuratie. Dat
+is het gangbare 3D-formaat, te openen in Blender, in de 3D-viewer van Windows,
+in de meeste webshop-viewers en in three.js. De maten staan in meters, elke
+kleur uit de catalogus wordt een eigen materiaal en het model staat met de vloer
+op nul, dus het valt meteen goed in een scène. In de gepubliceerde preview op
+claude.ai laat de viewer geen glb door, daar zegt de knop dat ook. Lokaal werkt
+hij gewoon.
+
+Elke productgroep wijst met het veld `tekening` naar een vorm. Dezelfde waarde
+bepaalt de 2D-tekening en het 3D-model, nu `bank`, `tafel`, `kast` en `raam`. Een
+nieuwe vorm is een functie van ongeveer dertig regels die dozen stapelt, zie
+`bouwKast` in `index.html` als voorbeeld. Fauteuils gebruiken de bankvorm met een
+lagere of hogere rug, dat scheelt een aparte functie.
+
+Wat er nu niet in zit zijn ronde vormen, stofstructuur en echte schaduwen. Voor
+een showroombeeld op dat niveau kun je beter modellen van je leveranciers
+inladen. De configurator kan dan per variant naar een glb-bestand wijzen in
+plaats van er zelf een te bouwen, dat is een uitbreiding van dezelfde opzet.
+
 ## Wat er naar Speed40 gaat
 
 POST met `Content-Type: application/json`. Voorbeeld met één regel:
