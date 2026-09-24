@@ -81,6 +81,7 @@
     width: 100%;
     height: auto;
     transform: rotate(0deg);
+    pointer-events: none;
     transition-property: transform;
     transition-timing-function: cubic-bezier(0.12, 0.7, 0.14, 1);
   }
@@ -101,7 +102,7 @@
     gap: 16px 24px;
     margin-top: 32px;
   }
-  button {
+  #spin {
     font: inherit;
     font-weight: 700;
     font-size: 1.1rem;
@@ -112,9 +113,31 @@
     padding: 14px 34px;
     cursor: pointer;
   }
-  button:hover { background: var(--accent-hover); }
+  #spin:hover { background: var(--accent-hover); }
   button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-  button:disabled { opacity: 0.55; cursor: default; background: var(--accent); }
+  #spin:disabled { opacity: 0.55; cursor: default; background: var(--accent); }
+
+  .extra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: -12px 0 32px;
+  }
+  .extra button {
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .extra button:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .extra button[aria-pressed="true"] { color: var(--ink); background: var(--line); }
+  .extra button:disabled { opacity: 0.5; cursor: default; }
   .result {
     font-size: 1.5rem;
     font-weight: 700;
@@ -168,8 +191,13 @@
 </header>
 
 <main>
-  <h1>Nienke of Liam</h1>
-  <p class="intro">Wie moet er? Druk op de knop en het rad kiest. Nienke en Liam hebben bij elke draai evenveel kans.</p>
+  <h1 id="title">Nienke of Liam</h1>
+  <p class="intro">Wie moet er? Druk op de knop en het rad kiest. Iedereen op het rad heeft bij elke draai evenveel kans.</p>
+
+  <div class="extra">
+    <button type="button" data-name="Bastiaan" aria-pressed="false">Bastiaan toevoegen</button>
+    <button type="button" data-name="Maureen" aria-pressed="false">Maureen toevoegen</button>
+  </div>
 
   <div class="stage">
     <svg class="pointer" viewBox="0 0 28 34" aria-hidden="true"><path d="M2 2h24L14 32z" fill="#F2F5FC"/></svg>
@@ -196,37 +224,97 @@
     var btn = document.getElementById('spin');
     var result = document.getElementById('result');
     var tally = document.getElementById('tally');
-    var names = ['Nienke', 'Liam'];
-    var counts = { Nienke: 0, Liam: 0 };
+    var title = document.getElementById('title');
+    var slices = document.getElementById('slices');
+    var toggles = document.querySelectorAll('.extra button');
+    var NS = 'http://www.w3.org/2000/svg';
+    var STORE = 'rad-extra';
+
+    // Vaste volgorde op het rad. Nienke en Liam staan er altijd op.
+    var PEOPLE = [
+      { name: 'Nienke', fill: '#2E6BFF', ink: '#FFFFFF' },
+      { name: 'Liam', fill: '#2C3B5C', ink: '#FFFFFF' },
+      { name: 'Bastiaan', fill: '#A8B3C9', ink: '#05080F' },
+      { name: 'Maureen', fill: '#3CC98A', ink: '#05080F' }
+    ];
+    // Hoe vaak elke naam rond het rad terugkomt, per aantal namen.
+    var REPEATS = { 2: 4, 3: 3, 4: 2 };
+
+    var extra = { Bastiaan: false, Maureen: false };
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORE) || '{}');
+      extra.Bastiaan = saved.Bastiaan === true;
+      extra.Maureen = saved.Maureen === true;
+    } catch (e) {}
+
+    var counts = {};
+    var active = [];
     var rotation = 0;
 
-    // Acht vakken om en om, vier per naam. Elk vak is 45 graden, gemeten
-    // met de klok mee vanaf boven. Vak 0 is Nienke.
-    var SLICES = 8;
-    var SIZE = 360 / SLICES;
-    var slices = document.getElementById('slices');
-    var NS = 'http://www.w3.org/2000/svg';
     function point(deg, r) {
       var rad = (deg - 90) * Math.PI / 180;
       return (r * Math.cos(rad)).toFixed(2) + ' ' + (r * Math.sin(rad)).toFixed(2);
     }
-    for (var i = 0; i < SLICES; i++) {
-      var a = i * SIZE;
-      var path = document.createElementNS(NS, 'path');
-      path.setAttribute('d', 'M0 0L' + point(a, 100) + 'A100 100 0 0 1 ' + point(a + SIZE, 100) + 'Z');
-      path.setAttribute('fill', i % 2 ? '#2C3B5C' : '#2E6BFF');
-      path.setAttribute('stroke', '#05080F');
-      path.setAttribute('stroke-width', '1.5');
-      slices.appendChild(path);
-      var text = document.createElementNS(NS, 'text');
-      text.setAttribute('x', '62');
-      text.setAttribute('y', '4.5');
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('fill', '#FFFFFF');
-      text.setAttribute('transform', 'rotate(' + (a + SIZE / 2 - 90) + ')');
-      text.textContent = names[i % 2];
-      slices.appendChild(text);
+
+    function listNames(list, last) {
+      if (list.length < 2) return list.join('');
+      return list.slice(0, -1).join(', ') + ' ' + last + ' ' + list[list.length - 1];
     }
+
+    function draw() {
+      active = PEOPLE.filter(function (p) {
+        return !(p.name in extra) || extra[p.name];
+      });
+      var n = active.length;
+      var total = n * REPEATS[n];
+      var size = 360 / total;
+      slices.textContent = '';
+      for (var i = 0; i < total; i++) {
+        var person = active[i % n];
+        var a = i * size;
+        var path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', 'M0 0L' + point(a, 100) + 'A100 100 0 0 1 ' + point(a + size, 100) + 'Z');
+        path.setAttribute('fill', person.fill);
+        path.setAttribute('stroke', '#05080F');
+        path.setAttribute('stroke-width', '1.5');
+        slices.appendChild(path);
+        var text = document.createElementNS(NS, 'text');
+        text.setAttribute('x', '62');
+        text.setAttribute('y', '4.5');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', person.ink);
+        text.setAttribute('transform', 'rotate(' + (a + size / 2 - 90) + ')');
+        text.textContent = person.name;
+        slices.appendChild(text);
+      }
+
+      var names = active.map(function (p) { return p.name; });
+      title.textContent = listNames(names, 'of');
+      document.title = title.textContent;
+      toggles.forEach(function (t) {
+        var name = t.getAttribute('data-name');
+        t.setAttribute('aria-pressed', extra[name] ? 'true' : 'false');
+        t.textContent = name + (extra[name] ? ' verwijderen' : ' toevoegen');
+      });
+    }
+
+    function showTally() {
+      var parts = active.map(function (p) {
+        return p.name + ' ' + (counts[p.name] || 0) + ' keer';
+      });
+      tally.hidden = false;
+      tally.textContent = 'Deze sessie: ' + listNames(parts, 'en') + '.';
+    }
+
+    toggles.forEach(function (t) {
+      t.addEventListener('click', function () {
+        var name = t.getAttribute('data-name');
+        extra[name] = !extra[name];
+        try { localStorage.setItem(STORE, JSON.stringify(extra)); } catch (e) {}
+        draw();
+        if (!tally.hidden) showTally();
+      });
+    });
 
     function randomFloat() {
       var buf = new Uint32Array(1);
@@ -238,17 +326,21 @@
     }
 
     btn.addEventListener('click', function () {
-      var pick = randomFloat() < 0.5 ? 0 : 1;
-      // Kies een van de vier vakken van die naam en een plek daarbinnen,
+      var n = active.length;
+      var repeats = REPEATS[n];
+      var size = 360 / (n * repeats);
+      var pick = randomInt(n);
+      // Kies een van de vakken van die naam en een plek daarbinnen,
       // met een paar graden afstand tot de randen.
-      var slice = randomInt(SLICES / 2) * 2 + pick;
-      var angle = slice * SIZE + 4 + randomFloat() * (SIZE - 8);
+      var slice = randomInt(repeats) * n + pick;
+      var angle = slice * size + 4 + randomFloat() * (size - 8);
       var turns = 4 + randomInt(5);
       var duration = 3.8 + randomFloat() * 2.4;
       rotation = rotation - (rotation % 360) + turns * 360 + (360 - angle);
       wheel.style.transitionDuration = duration.toFixed(2) + 's';
 
       btn.disabled = true;
+      toggles.forEach(function (t) { t.disabled = true; });
       result.className = 'result wait';
       result.textContent = 'Draait…';
       wheel.style.transform = 'rotate(' + rotation + 'deg)';
@@ -257,18 +349,20 @@
       function finish() {
         if (done) return;
         done = true;
-        var name = names[pick];
-        counts[name]++;
+        var name = active[pick].name;
+        counts[name] = (counts[name] || 0) + 1;
         result.className = 'result';
         result.textContent = 'Het wordt ' + name + '.';
-        tally.hidden = false;
-        tally.textContent = 'Deze sessie: Nienke ' + counts.Nienke + ' keer, Liam ' + counts.Liam + ' keer.';
+        showTally();
         btn.disabled = false;
+        toggles.forEach(function (t) { t.disabled = false; });
         btn.textContent = 'Nog een keer';
       }
       wheel.addEventListener('transitionend', finish, { once: true });
       setTimeout(finish, duration * 1000 + 600);
     });
+
+    draw();
   })();
 </script>
 </body>
