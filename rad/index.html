@@ -81,15 +81,16 @@
     width: 100%;
     height: auto;
     transform: rotate(0deg);
-    transition: transform 4.6s cubic-bezier(0.12, 0.7, 0.14, 1);
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.12, 0.7, 0.14, 1);
   }
   #wheel text {
     font-family: 'Archivo', sans-serif;
     font-weight: 750;
-    font-size: 17px;
+    font-size: 13px;
   }
   @media (prefers-reduced-motion: reduce) {
-    #wheel { transition-duration: 0.9s; }
+    #wheel { transition-duration: 0.9s !important; }
   }
 
   .controls {
@@ -174,11 +175,7 @@
     <svg class="pointer" viewBox="0 0 28 34" aria-hidden="true"><path d="M2 2h24L14 32z" fill="#F2F5FC"/></svg>
     <svg id="wheel" viewBox="-110 -110 220 220" aria-hidden="true">
       <circle r="106" fill="#1C2740"/>
-      <path d="M0 0V-100A100 100 0 0 1 0 100Z" fill="#2E6BFF"/>
-      <path d="M0 0V100A100 100 0 0 1 0 -100Z" fill="#2C3B5C"/>
-      <line x1="0" y1="-100" x2="0" y2="100" stroke="#05080F" stroke-width="2"/>
-      <text x="54" y="6" text-anchor="middle" fill="#FFFFFF">Nienke</text>
-      <text x="-54" y="6" text-anchor="middle" fill="#F2F5FC">Liam</text>
+      <g id="slices"></g>
       <circle r="21" fill="#05080F"/>
       <svg x="-8" y="-11.5" width="16" height="23" viewBox="26 29 996 1433" style="color:#F2F5FC"><use href="#ks-mark"/></svg>
     </svg>
@@ -203,19 +200,53 @@
     var counts = { Nienke: 0, Liam: 0 };
     var rotation = 0;
 
+    // Acht vakken om en om, vier per naam. Elk vak is 45 graden, gemeten
+    // met de klok mee vanaf boven. Vak 0 is Nienke.
+    var SLICES = 8;
+    var SIZE = 360 / SLICES;
+    var slices = document.getElementById('slices');
+    var NS = 'http://www.w3.org/2000/svg';
+    function point(deg, r) {
+      var rad = (deg - 90) * Math.PI / 180;
+      return (r * Math.cos(rad)).toFixed(2) + ' ' + (r * Math.sin(rad)).toFixed(2);
+    }
+    for (var i = 0; i < SLICES; i++) {
+      var a = i * SIZE;
+      var path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', 'M0 0L' + point(a, 100) + 'A100 100 0 0 1 ' + point(a + SIZE, 100) + 'Z');
+      path.setAttribute('fill', i % 2 ? '#2C3B5C' : '#2E6BFF');
+      path.setAttribute('stroke', '#05080F');
+      path.setAttribute('stroke-width', '1.5');
+      slices.appendChild(path);
+      var text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', '62');
+      text.setAttribute('y', '4.5');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', '#FFFFFF');
+      text.setAttribute('transform', 'rotate(' + (a + SIZE / 2 - 90) + ')');
+      text.textContent = names[i % 2];
+      slices.appendChild(text);
+    }
+
     function randomFloat() {
       var buf = new Uint32Array(1);
       crypto.getRandomValues(buf);
       return buf[0] / 4294967296;
     }
+    function randomInt(n) {
+      return Math.floor(randomFloat() * n);
+    }
 
     btn.addEventListener('click', function () {
       var pick = randomFloat() < 0.5 ? 0 : 1;
-      // Nienke staat rechts (0 tot 180 graden vanaf boven), Liam links.
-      // Kies een plek binnen de helft, niet te dicht bij de scheidingslijn.
-      var angle = pick * 180 + 15 + randomFloat() * 150;
-      var turns = 5 + Math.floor(randomFloat() * 3);
+      // Kies een van de vier vakken van die naam en een plek daarbinnen,
+      // met een paar graden afstand tot de randen.
+      var slice = randomInt(SLICES / 2) * 2 + pick;
+      var angle = slice * SIZE + 4 + randomFloat() * (SIZE - 8);
+      var turns = 4 + randomInt(5);
+      var duration = 3.8 + randomFloat() * 2.4;
       rotation = rotation - (rotation % 360) + turns * 360 + (360 - angle);
+      wheel.style.transitionDuration = duration.toFixed(2) + 's';
 
       btn.disabled = true;
       result.className = 'result wait';
@@ -236,7 +267,7 @@
         btn.textContent = 'Nog een keer';
       }
       wheel.addEventListener('transitionend', finish, { once: true });
-      setTimeout(finish, 5200);
+      setTimeout(finish, duration * 1000 + 600);
     });
   })();
 </script>
