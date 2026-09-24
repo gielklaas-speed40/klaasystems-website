@@ -5,6 +5,7 @@ Statische site voor Klaasystems (klaasystems.nl), gehost via GitHub Pages vanaf 
 - `index.html`: de hoofdsite, één zelfstandig bestand zonder dependencies (lettertype Archivo en logo zitten erin).
 - `urenbriefje/`: demo urenregistratie.
 - `vlakmaat/`: tool voor het opmeten van vlakken uit rastertekeningen.
+- `rad/`: rad dat willekeurig Nienke of Liam kiest.
 
 Schrijf teksten in het Nederlands. Loop bij elke tekst- of ontwerpwijziging de checklist hieronder na voordat je klaar bent.
 
