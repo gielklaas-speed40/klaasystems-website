@@ -6,6 +6,7 @@ Statische site voor Klaasystems (klaasystems.nl), gehost via GitHub Pages vanaf 
 - `urenbriefje/`: demo urenregistratie.
 - `vlakmaat/`: tool voor het opmeten van vlakken uit rastertekeningen.
 - `rad/`: rad dat willekeurig Nienke of Liam kiest.
+- `rit/`: kilometerregistratie die herkent wanneer je gaat rijden en per rit zakelijk of privé vastlegt.
 
 Schrijf teksten in het Nederlands. Loop bij elke tekst- of ontwerpwijziging de checklist hieronder na voordat je klaar bent.
 
