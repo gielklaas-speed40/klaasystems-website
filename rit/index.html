@@ -246,22 +246,22 @@
 
   <h2>Instellen</h2>
   <details id="uitleg">
-    <summary>Automatisch starten als je instapt</summary>
+    <summary>Automatisch vastleggen als je instapt</summary>
     <div>
-      <p>Zolang deze pagina open staat, merkt hij vanzelf dat je rijdt: boven 15 km/u begint de rit, na een paar minuten stilstaan stopt hij. Een browser mag je locatie niet op de achtergrond volgen. De pagina moet dus open blijven terwijl je rijdt. Het scherm blijft daarvoor aan.</p>
-      <p>Met een automatisering op je telefoon gaat de pagina vanzelf open zodra je telefoon met de auto verbindt.</p>
+      <p>Een browser mag je locatie niet volgen als de pagina dicht is of het scherm uit staat. Daarom laat je een automatisering op je telefoon het werk doen. Die stuurt bij het instappen en bij het uitstappen je locatie naar deze pagina. De afstand ertussen wordt over de weg berekend via OpenStreetMap. Tijdens het rijden mag de telefoon dan gewoon in je zak.</p>
       <p><strong>iPhone (Opdrachten-app)</strong></p>
       <ol>
-        <li>Open Opdrachten, tab Automatisering, en maak een nieuwe automatisering met <em>CarPlay</em> (Verbindt) of <em>Bluetooth</em> en kies de Bluetooth van je auto.</li>
-        <li>Kies <em>Voer direct uit</em>.</li>
-        <li>Voeg de actie <em>Open URL's</em> toe met <code id="url-start"></code></li>
-        <li>Maak er een tweede bij voor <em>Verbreekt</em>, met <code id="url-stop"></code> Dan sluit de rit af zodra je de motor uitzet.</li>
+        <li>Open Opdrachten, tab Automatisering, en maak een nieuwe automatisering met <em>Bluetooth</em> (of <em>CarPlay</em>). Kies de Bluetooth van je auto, vink <em>Verbindt</em> aan en kies <em>Voer direct uit</em>.</li>
+        <li>Voeg de actie <em>Huidige locatie</em> toe.</li>
+        <li>Voeg twee keer <em>Haal details van locaties op</em> toe, een keer voor <em>Breedtegraad</em> en een keer voor <em>Lengtegraad</em>.</li>
+        <li>Voeg <em>Open URL's</em> toe met <code id="url-start"></code> en zet op de plek van de puntjes de variabelen Breedtegraad en Lengtegraad.</li>
+        <li>Maak een tweede automatisering voor <em>Verbreekt</em> met dezelfde acties en <code id="url-stop"></code></li>
       </ol>
+      <p>Bij het instappen gaat de pagina even open, zodat je zakelijk of privé kunt kiezen. Daarna kun je de telefoon wegleggen. Wil je de keuze overslaan, zet dan <code>=zakelijk</code> of <code>=prive</code> achter <code>?start</code>.</p>
       <p>Zet in Instellingen, Apps, Safari, Locatie de toestemming op <em>Sta toe</em>, anders vraagt Safari het elke dag opnieuw. De ritten staan in Safari opgeslagen. Open de pagina daarom altijd in Safari en niet als los icoon op je beginscherm, want dat heeft een eigen opslag.</p>
       <p><strong>Android</strong></p>
-      <p>Gebruik een routine in de Google-app, Samsung Modi en routines of Tasker met als trigger de Bluetooth van de auto, en laat die dezelfde adressen openen in Chrome.</p>
-      <p>Wil je bij het instappen al vastleggen wat voor rit het is, gebruik dan <code id="url-zakelijk"></code> of <code>?start=prive</code>.</p>
-      <p>Navigeer je met een andere app, dan pauzeert de meting zolang deze pagina niet voorin staat. Als je terugkomt, wordt het gat opgevuld met de afstand over de weg tussen de laatste twee punten.</p>
+      <p>Tasker of Automate kan hetzelfde met de Bluetooth van de auto als trigger. Gebruik de variabelen voor je locatie in de adressen en laat ze openen in Chrome.</p>
+      <p>Als de pagina alleen begin en eind kent, telt hij de kortste route daartussen. Een omweg of een tussenstop valt daarbuiten. Pas de kilometers in dat geval aan in de rit. Laat je de pagina tijdens het rijden open staan, dan meet hij de werkelijke route via GPS.</p>
     </div>
   </details>
   <details>
@@ -345,6 +345,16 @@
   try { S = Object.assign(leeg(), JSON.parse(localStorage.getItem(OPSLAG)) || {}); }
   catch (e) { S = leeg(); }
   S.instellingen = Object.assign(leeg().instellingen, S.instellingen);
+  const herlaad = () => {
+    try {
+      const n = JSON.parse(localStorage.getItem(OPSLAG));
+      if (!n) return;
+      S = Object.assign(leeg(), n);
+      S.instellingen = Object.assign(leeg().instellingen, n.instellingen);
+      // Knoppen in het rit-paneel verwijzen naar het oude object: opnieuw opbouwen.
+      $('rit').dataset.sleutel = '';
+    } catch (e) { /* houd wat we hebben */ }
+  };
   const bewaar = () => {
     try { localStorage.setItem(OPSLAG, JSON.stringify(S)); }
     catch (e) { toon('Opslaan lukt niet. Is de opslag van de browser vol?'); }
@@ -546,6 +556,7 @@
         if (!r) return;
         r.meters = Math.round(r.meters + extra);
         herbereken();
+        toon(`Rit van ${km(r.meters)} km opgeslagen` + (r.soort ? '' : '. Kies nog zakelijk of privé.'));
       }
       bewaar(); teken();
     });
@@ -554,9 +565,9 @@
   function controleerStilstand() {
     const a = S.actief;
     if (!a) return;
-    // Na terugkomen eerst een verse positie afwachten: misschien is er intussen gereden.
-    const vers = laatsteFix && laatsteFix.t >= versSinds;
-    if (!vers && Date.now() - versSinds < 60000) return;
+    // Alleen afsluiten op een verse positie: na terugkomen of zonder GPS weten we niet
+    // of er intussen gereden is. De automatisering bij uitstappen sluit de rit dan af.
+    if (!laatsteFix || laatsteFix.t < versSinds) return;
     const grens = S.instellingen.stopMin * 60000;
     if (Date.now() - a.laatsteBeweging > grens) stopRit(a.laatsteBeweging);
   }
@@ -815,9 +826,8 @@
   $('osm').onchange = () => { S.instellingen.osm = $('osm').checked; bewaar(); };
 
   const basis = location.origin + location.pathname;
-  $('url-start').textContent = basis + '?start';
-  $('url-stop').textContent = basis + '?stop';
-  $('url-zakelijk').textContent = '?start=zakelijk';
+  $('url-start').textContent = basis + '?start&lat=…&lon=…';
+  $('url-stop').textContent = basis + '?stop&lat=…&lon=…';
 
   // ---------- starten ----------
   const q = new URLSearchParams(location.search);
@@ -826,31 +836,40 @@
   herbereken();
   laadInstellingen();
 
+  // De automatisering kan de locatie meesturen (&lat=..&lon=..). Dan hoeft de pagina
+  // tijdens het rijden niet open te staan: de route tussen begin en eind wordt opgezocht.
+  // Opdrachten schrijft met een Nederlandse regio een komma als decimaalteken.
+  const getal = (n) => parseFloat(String(q.get(n) || '').replace(',', '.'));
+  const meegegeven = Number.isFinite(getal('lat')) && Number.isFinite(getal('lon'))
+    ? { timestamp: Date.now(), coords: { latitude: getal('lat'), longitude: getal('lon'), accuracy: 20, speed: null } }
+    : null;
+
   if (q.has('stop') && S.actief) {
     stopNaFix = true;
+    if (meegegeven) verwerk(meegegeven);
     // Geen GPS binnen 20 seconden: afsluiten met wat we hebben.
-    setTimeout(() => { if (stopNaFix) { stopNaFix = false; stopRit(); } }, 20000);
+    else setTimeout(() => { if (stopNaFix) { stopNaFix = false; stopRit(); } }, 20000);
   }
   if (q.has('start')) {
     const soort = ['zakelijk', 'prive'].includes(q.get('start')) ? q.get('start') : null;
     if (S.actief) { if (soort && !S.actief.soort) { S.actief.soort = soort; bewaar(); } }
-    else startRit(null, 'snelkoppeling', soort);
+    else if (meegegeven) {
+      const c = meegegeven.coords;
+      startRit({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, v: null, t: meegegeven.timestamp }, 'snelkoppeling', soort);
+    } else startRit(null, 'snelkoppeling', soort);
   }
 
   teken();
 
-  // Alleen direct GPS vragen als de toestemming al gegeven is, of als er een reden is (rit of snelkoppeling).
-  const zelfStarten = () => { if (S.actief || q.has('start') || q.has('stop')) volg(); };
-  if (navigator.permissions && navigator.permissions.query) {
-    navigator.permissions.query({ name: 'geolocation' })
-      .then((p) => { if (p.state === 'granted') volg(); else zelfStarten(); })
-      .catch(zelfStarten);
-  } else zelfStarten();
+  // De pagina heeft zonder locatie geen functie, dus meteen bij openen vragen.
+  volg();
 
   wakker();
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') { versSinds = Date.now(); wakker(); tekenRit(); }
+    // Een ander tabblad (geopend door de automatisering) kan de rit intussen hebben afgesloten.
+    if (document.visibilityState === 'visible') { herlaad(); versSinds = Date.now(); wakker(); teken(); }
   });
+  window.addEventListener('storage', (e) => { if (e.key === OPSLAG) { herlaad(); teken(); } });
   $('maand').onchange = tekenLijst;
   setInterval(() => { controleerStilstand(); if (S.actief) tekenRit(); }, 15000);
 })();
